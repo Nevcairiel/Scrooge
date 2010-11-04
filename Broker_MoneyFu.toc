@@ -14,3 +14,4 @@ libs\LibDataBroker\LibDataBroker-1.1.lua
 
 Core.lua
 Config.lua
+Menu.lua
