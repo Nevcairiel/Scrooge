@@ -1,39 +1,19 @@
+local l = select(2, ...)
 local addonname = "Broker_MoneyFu"
 BrokerMoneyFu = LibStub("AceAddon-3.0"):NewAddon(addonname, "AceEvent-3.0")
 local BMF = BrokerMoneyFu
 
-local LibQTip = LibStub("LibQTip-1.0")
 local LDB = LibStub('LibDataBroker-1.1')
-if not LDB or not LibQTip then return end
+if not LDB then return end
 
 --local L = LibStub:GetLibrary("AceLocale-3.0"):GetLocale(addonname)
 
 local historysize = 29
-local realmkey = GetRealmName()
-local factionkey = UnitFactionGroup("player")
-local otherfaction = (factionkey == "Alliance") and "Horde" or "Alliance"
 
-local function mkdata(tbl)
+function l.mkdata(tbl)
 	tbl.spent = {}
 	tbl.gained = {}
 	tbl.time = {}
-end
-
-local offset
-local function serveroffset()
-	if offset then
-		return offset
-	end
-	local shour, sminute = GetGameTime()
-	local ser = shour + sminute / 60
-	local utc = tonumber(date("!%H")) + tonumber(date("!%M")) / 60
-	offset = floor((ser - utc) * 2 + 0.5) / 2
-	if offset >= 12 then
-		offset = offset - 24
-	elseif offset < -12 then
-		offset = offset + 24
-	end
-	return offset
 end
 
 local function clearmoney(tbl, when)
@@ -77,33 +57,6 @@ local function storemoney(tbl, amount, elapsed, when)
 	end
 end
 
-local datakeys = {"gained", "spent", "time"}
-local function accumulate(dest, src)
-	if not src then return end
-
-	for _, subv in ipairs(datakeys) do
-		for k, v in pairs(src[subv]) do
-			dest[subv][k] = (dest[subv][k] or 0) + v
-		end
-	end
-end
-
-local function consolidate(src, dstart, dend)
-	if not src then return end
-	local ret = {}
-	for i = dstart, dend do
-		for _, subv in ipairs(datakeys) do
-			ret[subv] = (ret[subv] or 0) + (src[subv][i] or 0)
-		end
-	end
-	return ret
-end
-
-local wealthlist = {}
-local function wealthsort(a, b)
-	return wealthlist[a] < wealthlist[b]
-end
-
 function BMF:OnInitialize()
 	local defaults = {
 		profile = {
@@ -145,21 +98,24 @@ end
 
 function BMF:OnEnable()
 	self.playername = UnitName("player")
+	self.realmkey = GetRealmName()
+	self.factionkey = UnitFactionGroup("player")
+	self.otherfaction = (self.factionkey == "Alliance") and "Horde" or "Alliance"
 
-	self.db.global[realmkey] = self.db.global[realmkey] or {}
-	if not self.db.global[realmkey][factionkey] then
-		self.db.global[realmkey][factionkey] = {
+	self.db.global[self.realmkey] = self.db.global[self.realmkey] or {}
+	if not self.db.global[self.realmkey][self.factionkey] then
+		self.db.global[self.realmkey][self.factionkey] = {
 			guilds = {},
 			chars = {},
 		}
-		mkdata(self.db.global[realmkey][factionkey])
+		l.mkdata(self.db.global[self.realmkey][self.factionkey])
 	end
 
-	self.realmdb = self.db.global[realmkey][factionkey]
+	self.realmdb = self.db.global[self.realmkey][self.factionkey]
 
 	if not self.realmdb.chars[self.playername] then
 		self.realmdb.chars[self.playername] = {}
-		mkdata(self.realmdb.chars[self.playername])
+		l.mkdata(self.realmdb.chars[self.playername])
 	end
 	self.chardb = self.realmdb.chars[self.playername]
 
@@ -269,173 +225,25 @@ function BMF:FormatMoney(amount, colorize)
 	local copper = abs(mod(value, 100))
 end
 
-function BMF:AddMoneyLines(tbl, when)
-	local hourly = self.db.profile.perhour
-	local tip = self.tip
-	local gained, spent, time
-	if when then
-		gained = tbl.gained[when] or 0
-		spent = tbl.spent[when] or 0
-		time = tbl.time[when] or 0
-	else
-		gained = tbl.gained or 0
-		spent = tbl.spent or 0
-		time = tbl.time or 0
+local offset
+local function serveroffset()
+	if offset then
+		return offset
 	end
-	if time <= 0 then hourly = false end
-	time = time / 3600
-
-	local line
-	line = tip:AddLine(nil, self:FormatMoney(gained),
-		hourly and self:FormatMoney(gained / time) or nil)
-	tip:SetCell(line, 1, "Gained", self.yellowfont)
-	line = tip:AddLine(nil, self:FormatMoney(spent),
-		hourly and self:FormatMoney(spent / time) or nil)
-	tip:SetCell(line, 1, "Spent", self.yellowfont)
-	local profit = gained - spent
-	line = tip:AddLine(nil, self:FormatMoney(profit, true),
-		hourly and self:FormatMoney(profit / time, true) or nil)
-	tip:SetCell(line, 1, profit >= 0 and "Profit" or "Loss", self.yellowfont)
-end
-
-function BMF:UpdateTooltip()
-	local tip = self.tip
-	local hourly = self.db.profile.perhour
-	local today = self:Today()
-	if not tip then return end
-
-	tip:Clear()
-	tip:SetCellMarginH(20)
-	tip:SetColumnLayout(hourly and 3 or 2, "LEFT", "RIGHT", "RIGHT")
-
-	tip:AddHeader("This Session", "Amount", hourly and "Per Hour" or nil)
-	self:AddMoneyLines(self.session)
-
-	local data
-	if self.db.profile.perchar then
-		data = self.chardb
-	else
-		data = {}
-		mkdata(data)
-		local rkeys
-		if self.db.profile.allrealms then
-			rkeys = {}
-			for k, _ in pairs(self.db.global) do
-				table.insert(rkeys, k)
-			end
-		else
-			rkeys = { realmkey }
-		end
-
-		local fkeys = { factionkey }
-		if self.db.profile.crossfaction then
-			table.insert(fkeys, otherfaction)
-		end
-
-		for _, realm in ipairs(rkeys) do
-			for _, faction in ipairs(fkeys) do
-				local frdata = self.db.global[realm] and self.db.global[realm][faction]
-				accumulate(data, frdata)
-			end
-		end
+	local shour, sminute = GetGameTime()
+	local ser = shour + sminute / 60
+	local utc = tonumber(date("!%H")) + tonumber(date("!%M")) / 60
+	offset = floor((ser - utc) * 2 + 0.5) / 2
+	if offset >= 12 then
+		offset = offset - 24
+	elseif offset < -12 then
+		offset = offset + 24
 	end
-
-	if self.db.profile.today then
-		tip:AddLine(" ")
-		tip:AddHeader("Today", "Amount", hourly and "Per Hour" or nil)
-		self:AddMoneyLines(data, today)
-	end
-
-	if self.db.profile.yesterday then
-		tip:AddLine(" ")
-		tip:AddHeader("Yesterday", "Amount", hourly and "Per Hour" or nil)
-		self:AddMoneyLines(data, today - 1)
-	end
-
-	local cdata
-	if self.db.profile.last7 then
-		cdata = consolidate(data, today - 6, today)
-		tip:AddLine(" ")
-		tip:AddHeader("Last 7 Days",  "Amount", hourly and "Per Hour" or nil)
-		self:AddMoneyLines(cdata)
-	end
-
-	if self.db.profile.last30 then
-		cdata = consolidate(data, today - 29, today)
-		tip:AddLine(" ")
-		tip:AddHeader("Last 30 Days",  "Amount", hourly and "Per Hour" or nil)
-		self:AddMoneyLines(cdata)
-	end
-
-	local total = 0
-	if self.db.profile.charlist then
-		total = total + self:AddWealthList("chars", "Characters", true)
-	end
-	if self.db.profile.guildlist then
-		total = total + self:AddWealthList("guilds", "Guilds")
-	end
-
-	if self.db.profile.charlist or self.db.profile.guildlist then
-		tip:AddLine(" ")
-		local line = tip:AddLine("Total")
-		tip:SetCell(line, 2, self:FormatMoney(total), hourly and 2 or 1)
-	
-	end
-end
-
-function BMF:AddWealthList(tblname, header, ignoreplayer)
-	local tip = self.tip
-	local colspan = self.db.profile.perhour and 2 or 1
-	local total = 0
-	local line
-
-	wipe(wealthlist)
-	for k, v in pairs(self.realmdb[tblname]) do
-		wealthlist[k] = v.money
-	end
-	if self.db.profile.crossfaction and self.db.global[realmkey][otherfaction] then
-		for k, v in pairs(self.db.global[realmkey][otherfaction][tblname]) do
-			wealthlist[k] = v.money
-		end
-	end
-	if (not ignoreplayer and next(wealthlist)) or ignoreplayer and (next(wealthlist) ~= self.playername or next(wealthlist, self.playername)) then
-		local t = {}
-		for name in pairs(wealthlist) do
-			table.insert(t, name)
-		end
-		table.sort(t, wealthsort)
-		tip:AddLine(" ")
-		line = tip:AddHeader(header)
-		tip:SetCell(line, 2, "Amount", colspan)
-		for _, name in pairs(t) do
-			line = tip:AddLine()
-			tip:SetCell(line, 1, name, self.yellowfont)
-			tip:SetCell(line, 2, self:FormatMoney(wealthlist[name]), colspan)
-			total = total + wealthlist[name]
-		end
-	elseif ignoreplayer then
-		total = wealthlist[self.playername]
-	end
-
-	return total
+	return offset
 end
 
 function BMF:Today()
 	return floor((time() / 3600 + serveroffset()) / 24)
-end
-
-function BMF.OnLDBEnter(frame)
-	BMF.tip = LibQTip:Acquire("BrokerMoneyFuTip")
-	BMF.tip:SmartAnchorTo(frame)
-	BMF.tip:SetHeaderFont(GameTooltipText)
-
-	BMF:UpdateTooltip()
-	BMF.tip:Show()
-end
-
-function BMF.OnLDBLeave(frame)
-	LibQTip:Release(BMF.tip)
-	BMF.tip = nil
 end
 
 function BMF.OnLDBClick(frame, button)
