@@ -4,12 +4,13 @@
 ## Version: @project-version@
 ## Author: Thelibrarian
 ## SavedVariables: BrokerMoneyFuDB
+## OptionalDeps: Ace3, LibQTip-1.0
 
 #@no-lib-strip@
 embeds.xml
 #@end-no-lip-strip@
 
-libs/LibDataBroker-1.1/LibDataBroker-1.1.lua
+libs\LibDataBroker\LibDataBroker-1.1.lua
 
 Core.lua
 Config.lua
