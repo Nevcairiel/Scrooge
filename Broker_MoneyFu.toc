@@ -1,0 +1,15 @@
+## Interface: 40000
+## Title: Broker: MoneyFu
+## Notes: Keeps track of gold and cash flow across multiple characters
+## Version: @project-version@
+## Author: Thelibrarian
+## SavedVariables: BrokerMoneyFuDB
+
+#@no-lib-strip@
+embeds.xml
+#@end-no-lip-strip@
+
+libs/LibDataBroker-1.1/LibDataBroker-1.1.lua
+
+Core.lua
+Config.lua
