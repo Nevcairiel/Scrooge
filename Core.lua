@@ -63,7 +63,7 @@ function BMF:OnInitialize()
 			ldbstyle = "graphical",
 			tipstyle = "graphical",
 			perchar = false,
-			perhour = true,
+			perhour = false,
 			crossfaction = false,
 			allrealms = false,
 			today = true,
@@ -152,6 +152,7 @@ function BMF:CheckMoney()
 
 	if initial then
 		today = self.chardb.day
+		self.chardb.day = self:Today()
 	elseif today > self.chardb.day then
 		clearmoney(self.chardb, today - historysize - 1)
 		clearmoney(self.realmdb, today - historysize - 1)
@@ -292,6 +293,43 @@ function BMF:SetProfile(key, value)
 
 	self:UpdateText()
 	self:UpdateTooltip()
+end
+
+function BMF:VacuumDB(realm, faction)
+	if not self.db.global[realm] or not self.db.global[realm][faction] then
+		return
+	end
+
+	if not next(self.db.global[realm][faction].chars) and not next(self.db.global[realm][faction].guilds) then
+		self.db.global[realm][faction] = nil
+	end
+	if not next(self.db.global[realm]) then
+		self.db.global[realm] = nil
+	end
+end
+
+function BMF:AddGuild(name)
+	self.realmdb.guilds[name] = {
+		money = 0
+	}
+end
+
+function BMF:DeleteCharacter(realm, faction, name)
+	if not self.db.global[realm] or not self.db.global[realm][faction] then
+		return
+	end
+
+	self.db.global[realm][faction].chars[name] = nil
+	self:VacuumDB(realm, faction)
+end
+
+function BMF:DeleteGuild(realm, faction, name)
+	if not self.db.global[realm] or not self.db.global[realm][faction] then
+		return
+	end
+
+	self.db.global[realm][faction].guilds[name] = nil
+	self:VacuumDB(realm, faction)
 end
 
 function BMF.OnLDBClick(frame, button)
