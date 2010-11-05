@@ -249,7 +249,7 @@ local function mkcharoptions()
 	c.current = poprealm(BMF.realmkey, BMF.factionkey, BMF.realmdb.chars, charcb)
 	for rname, rdata in pairs(BMF.db.global) do
 		for fname, fdata in pairs(rdata) do
-			if not (rname == BMF.realmkey and fname == BMF.factionkey) and next(rdata.chars) then
+			if not (rname == BMF.realmkey and fname == BMF.factionkey) and next(fdata.chars) then
 				c[rname.." - "..fname] = poprealm(rname, fname, fdata.chars, charcb)
 			end
 		end
