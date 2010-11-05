@@ -76,6 +76,10 @@ function BMF:OnInitialize()
 	}
 
 	self.db = LibStub("AceDB-3.0"):New("BrokerMoneyFuDB", defaults, true)
+	if not self.db.global.version then
+		self.db.global.version = 1
+	end
+
 	self.ldb = LDB:NewDataObject(addonname, {
 		type = "data source",
 		icon = "Interface\\Minimap\\Tracking\\Auctioneer",
@@ -104,16 +108,21 @@ function BMF:OnEnable()
 	self.factionkey = UnitFactionGroup("player")
 	self.otherfaction = (self.factionkey == "Alliance") and "Horde" or "Alliance"
 
-	self.db.global[self.realmkey] = self.db.global[self.realmkey] or {}
-	if not self.db.global[self.realmkey][self.factionkey] then
-		self.db.global[self.realmkey][self.factionkey] = {
+	if not self.db.global.data then
+		self.db.global.data = {}
+	end
+	self.data = self.db.global.data
+
+	self.data[self.realmkey] = self.data[self.realmkey] or {}
+	if not self.data[self.realmkey][self.factionkey] then
+		self.data[self.realmkey][self.factionkey] = {
 			guilds = {},
 			chars = {},
 		}
-		l.mkdata(self.db.global[self.realmkey][self.factionkey])
+		l.mkdata(self.data[self.realmkey][self.factionkey])
 	end
 
-	self.realmdb = self.db.global[self.realmkey][self.factionkey]
+	self.realmdb = self.data[self.realmkey][self.factionkey]
 
 	if not self.realmdb.chars[self.playername] then
 		self.realmdb.chars[self.playername] = {}
@@ -296,15 +305,15 @@ function BMF:SetProfile(key, value)
 end
 
 function BMF:VacuumDB(realm, faction)
-	if not self.db.global[realm] or not self.db.global[realm][faction] then
+	if not self.data[realm] or not self.data[realm][faction] then
 		return
 	end
 
-	if not next(self.db.global[realm][faction].chars) and not next(self.db.global[realm][faction].guilds) then
-		self.db.global[realm][faction] = nil
+	if not next(self.data[realm][faction].chars) and not next(self.data[realm][faction].guilds) then
+		self.data[realm][faction] = nil
 	end
-	if not next(self.db.global[realm]) then
-		self.db.global[realm] = nil
+	if not next(self.data[realm]) then
+		self.data[realm] = nil
 	end
 end
 
@@ -315,20 +324,20 @@ function BMF:AddGuild(name)
 end
 
 function BMF:DeleteCharacter(realm, faction, name)
-	if not self.db.global[realm] or not self.db.global[realm][faction] then
+	if not self.data[realm] or not self.data[realm][faction] then
 		return
 	end
 
-	self.db.global[realm][faction].chars[name] = nil
+	self.data[realm][faction].chars[name] = nil
 	self:VacuumDB(realm, faction)
 end
 
 function BMF:DeleteGuild(realm, faction, name)
-	if not self.db.global[realm] or not self.db.global[realm][faction] then
+	if not self.data[realm] or not self.data[realm][faction] then
 		return
 	end
 
-	self.db.global[realm][faction].guilds[name] = nil
+	self.data[realm][faction].guilds[name] = nil
 	self:VacuumDB(realm, faction)
 end
 

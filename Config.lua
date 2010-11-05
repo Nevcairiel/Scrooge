@@ -247,7 +247,7 @@ local function mkcharoptions()
 	lastorder = 20
 
 	c.current = poprealm(BMF.realmkey, BMF.factionkey, BMF.realmdb.chars, charcb)
-	for rname, rdata in pairs(BMF.db.global) do
+	for rname, rdata in pairs(BMF.data) do
 		for fname, fdata in pairs(rdata) do
 			if not (rname == BMF.realmkey and fname == BMF.factionkey) and next(fdata.chars) then
 				c[rname.." - "..fname] = poprealm(rname, fname, fdata.chars, charcb)
@@ -296,7 +296,7 @@ local function mkguildoptions()
 	if next(BMF.realmdb.guilds) then
 		c.current = poprealm(BMF.realmkey, BMF.factionkey, BMF.realmdb.guilds, guildcb)
 	end
-	for rname, rdata in pairs(BMF.db.global) do
+	for rname, rdata in pairs(BMF.data) do
 		for fname, fdata in pairs(rdata) do
 			if not (rname == BMF.realmkey and fname == BMF.factionkey) and next(fdata.guilds) then
 				c[rname.." - "..fname] = poprealm(rname, fname, fdata.guilds, guildcb)

@@ -55,7 +55,7 @@ function BMF:UpdateTooltip()
 		local rkeys
 		if self.db.profile.allrealms then
 			rkeys = {}
-			for k, _ in pairs(self.db.global) do
+			for k, _ in pairs(self.data) do
 				table.insert(rkeys, k)
 			end
 		else
@@ -69,7 +69,7 @@ function BMF:UpdateTooltip()
 
 		for _, realm in ipairs(rkeys) do
 			for _, faction in ipairs(fkeys) do
-				local frdata = self.db.global[realm] and self.db.global[realm][faction]
+				local frdata = self.data[realm] and self.data[realm][faction]
 				accumulate(data, frdata)
 			end
 		end
@@ -159,8 +159,8 @@ function BMF:AddWealthList(tblname, header, ignoreplayer)
 	for k, v in pairs(self.realmdb[tblname]) do
 		wealthlist[k] = v.money
 	end
-	if self.db.profile.crossfaction and self.db.global[self.realmkey][self.otherfaction] then
-		for k, v in pairs(self.db.global[self.realmkey][self.otherfaction][tblname]) do
+	if self.db.profile.crossfaction and self.data[self.realmkey][self.otherfaction] then
+		for k, v in pairs(self.data[self.realmkey][self.otherfaction][tblname]) do
 			wealthlist[k] = v.money
 		end
 	end
