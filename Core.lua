@@ -60,7 +60,8 @@ end
 function BMF:OnInitialize()
 	local defaults = {
 		profile = {
-			style = "graphical",
+			ldbstyle = "graphical",
+			tipstyle = "graphical",
 			perchar = false,
 			perhour = true,
 			crossfaction = false,
@@ -90,6 +91,7 @@ function BMF:OnInitialize()
 	self.yellowfont:SetTextColor(1, 1, 0)
 
 	self:CreateMenu()
+	self:SetupConfig()
 end
 
 function BMF:ResetSession()
@@ -199,30 +201,63 @@ end
 function BMF:UpdateText()
 	local money = GetMoney()
 
-	self.ldb.text = self:FormatMoney(money)
+	self.ldb.text = self:FormatMoney(self.db.profile.ldbstyle, money)
 end
 
-local COLOR_GREEN = "00ff00"
-local COLOR_RED = "ff0000"
-local COLOR_COPPER = "eda55f"
-local COLOR_SILVER = "c7c7cf"
-local COLOR_GOLD = "ffd700"
-function BMF:FormatMoney(amount, colorize)
-	local style = self.db.profile.style
+local COLOR_GREEN = "|cff00ff00"
+local COLOR_RED = "|cffff0000"
+local COLOR_COPPER = "|cffeda55f"
+local COLOR_SILVER = "|cffc7c7cf"
+local COLOR_GOLD = "|cffffd700"
+function BMF:FormatMoney(style, amount, colorize)
 	local prefix = (amount < 0) and "-" or ""
-	local color = (amount < 0) and COLOR_RED or COLOR_GREEN
+	local color = ""
+	if colorize and amount ~= 0 then
+		color = (amount < 0) and COLOR_RED or COLOR_GREEN
+	end
 
 	if not style or style == "graphical" then
-		if colorize and amount ~= 0 then
-			return format("|cff%s%s%s|r", color, prefix, GetCoinTextureString(abs(amount), 0))
+		return format("%s%s%s|r", color, prefix, GetCoinTextureString(abs(amount), 0))
+	end
+
+	local value = abs(amount)
+	local gold = floor(abs(amount / 10000))
+	local silver = floor(abs(mod(amount / 100, 100)))
+	local copper = floor(abs(mod(amount, 100)))
+
+	if style == "full" then
+		if gold > 0 then
+			return format("%s%s%d|r%s%s|r %s%d|r%s%s|r %s%d|r%s%s|r", color, prefix, gold, COLOR_GOLD, GOLD_AMOUNT_SYMBOL, color, silver, COLOR_SILVER, SILVER_AMOUNT_SYMBOL, color, copper, COLOR_COPPER, COPPER_AMOUNT_SYMBOL)
+		elseif silver > 0 then
+			return format("%s%s%d|r%s%s|r %s%d|r%s%s|r", color, prefix, silver, COLOR_SILVER, SILVER_AMOUNT_SYMBOL, color, copper, COLOR_COPPER, COPPER_AMOUNT_SYMBOL)
 		else
-			return prefix..GetCoinTextureString(abs(amount), 0)
+			return format("%s%s%d|r%s%s|r", color, prefix, copper, COLOR_COPPER, COPPER_AMOUNT_SYMBOL)
+		end
+	elseif style == "short" then
+		if gold > 0 then
+			return format("%s%.1f|r%s%s|r", color, amount / 10000, COLOR_GOLD, GOLD_AMOUNT_SYMBOL)
+		elseif silver > 0 then
+			return format("%s%.1f|r%s%s|r", color, amount / 100, COLOR_SILVER, SILVER_AMOUNT_SYMBOL)
+		else
+			return format("%s%d|r%s%s|r", color, copper, COLOR_COPPER, COPPER_AMOUNT_SYMBOL)
+		end
+	elseif style == "condensed" then
+		local postfix = ""
+		if amount < 0 then
+			prefix = COLOR_RED.."-(|r"
+			postfix = COLOR_RED..")|r"
+		end
+		if gold > 0 then
+			return format("%s%s%d|r.%s%02d|r.%s%02d|r%s", prefix, COLOR_GOLD, gold, COLOR_SILVER, silver, COLOR_COPPER, copper, postfix)
+		elseif silver > 0 then
+			return format("%s%s%d|r.%s%02d|r%s", prefix, COLOR_SILVER, silver, COLOR_COPPER, copper, postfix)
+		else
+			return format("%s%s%d|r%s", prefix, COLOR_COPPER, copper, postfix)
 		end
 	end
 
-	local gold = abs(value / 10000)
-	local silver = abs(mod(value / 100, 100))
-	local copper = abs(mod(value, 100))
+	-- Shouldn't be here; punt
+	return self:FormatMoney("graphical", amount, colorize)
 end
 
 local offset
@@ -244,6 +279,19 @@ end
 
 function BMF:Today()
 	return floor((time() / 3600 + serveroffset()) / 24)
+end
+
+function BMF:SetProfile(key, value)
+	self.db.profile[key] = value
+
+	if key == "perchar" and value then
+		self.db.profile.allrealms = false
+	elseif key == "allrealms" and value then
+		self.db.profile.perchar = false
+	end
+
+	self:UpdateText()
+	self:UpdateTooltip()
 end
 
 function BMF.OnLDBClick(frame, button)

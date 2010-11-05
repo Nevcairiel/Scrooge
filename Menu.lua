@@ -58,7 +58,7 @@ function BMF.InitializeMenu(frame, level)
 		info.text = "Reset Session"
 		UIDropDownMenu_AddButton(info, level)
 
-		info.func = nil
+		info.func = BMF.MenuSettings
 		info.text = "Settings..."
 		UIDropDownMenu_AddButton(info, level)
 
@@ -73,11 +73,13 @@ function BMF.HideMenu()
 end
 
 function BMF.MenuSetProfile(frame, pname, _, checked)
-	BMF.db.profile[pname] = checked
-	BMF:UpdateText()
-	BMF:UpdateTooltip()
+	BMF:SetProfile(pname, checked)
 end
 
 function BMF.MenuResetSession()
 	BMF:ResetSession()
+end
+
+function BMF.MenuSettings()
+	InterfaceOptionsFrame_OpenToCategory(BMF.optref)
 end
