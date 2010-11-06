@@ -60,16 +60,17 @@ end
 function BMF:OnInitialize()
 	local defaults = {
 		profile = {
-			ldbstyle = "graphical",
-			tipstyle = "graphical",
-			perchar = false,
+			ldbstyle = "smart",
+			ldbcoins = true,
+			tipstyle = "full",
+			tipcoins = true,
+			cashflow = "realm",
 			perhour = false,
 			crossfaction = false,
-			allrealms = false,
 			today = true,
 			yesterday = true,
-			last7 = true,
-			last30 = true,
+			last7 = false,
+			last30 = false,
 			charlist = true,
 			guildlist = true,
 		},
@@ -79,6 +80,7 @@ function BMF:OnInitialize()
 	if not self.db.global.version then
 		self.db.global.version = 1
 	end
+	self:UpgradeDB()
 
 	self.ldb = LDB:NewDataObject(addonname, {
 		type = "data source",
@@ -96,6 +98,11 @@ function BMF:OnInitialize()
 
 	self:CreateMenu()
 	self:SetupConfig()
+end
+
+function BMF:UpgradeDB()
+	self.db.profile.perchar = nil
+	self.db.profile.allrealms = nil
 end
 
 function BMF:ResetSession()
@@ -211,7 +218,7 @@ end
 function BMF:UpdateText()
 	local money = GetMoney()
 
-	self.ldb.text = self:FormatMoney(self.db.profile.ldbstyle, money)
+	self.ldb.text = self:FormatMoneyLDB(money)
 end
 
 local COLOR_GREEN = "|cff00ff00"
@@ -219,37 +226,61 @@ local COLOR_RED = "|cffff0000"
 local COLOR_COPPER = "|cffeda55f"
 local COLOR_SILVER = "|cffc7c7cf"
 local COLOR_GOLD = "|cffffd700"
-function BMF:FormatMoney(style, amount, colorize)
+local ICON_COPPER = "|TInterface\\MoneyFrame\\UI-CopperIcon:14:14:2:0|t"
+local ICON_SILVER = "|TInterface\\MoneyFrame\\UI-SilverIcon:14:14:2:0|t"
+local ICON_GOLD = "|TInterface\\MoneyFrame\\UI-GoldIcon:14:14:2:0|t"
+function BMF:FormatMoney(amount, colorize, style, textonly)
 	local prefix = (amount < 0) and "-" or ""
 	local color = ""
+	local coppername = textonly and format("%s%s|r", COLOR_COPPER, COPPER_AMOUNT_SYMBOL) or ICON_COPPER
+	local silvername = textonly and format("%s%s|r", COLOR_SILVER, SILVER_AMOUNT_SYMBOL) or ICON_SILVER
+	local goldname = textonly and format("%s%s|r", COLOR_GOLD, GOLD_AMOUNT_SYMBOL) or ICON_GOLD
 	if colorize and amount ~= 0 then
 		color = (amount < 0) and COLOR_RED or COLOR_GREEN
 	end
 
-	if not style or style == "graphical" then
-		return format("%s%s%s|r", color, prefix, GetCoinTextureString(abs(amount), 0))
-	end
-
 	local value = abs(amount)
-	local gold = floor(abs(amount / 10000))
-	local silver = floor(abs(mod(amount / 100, 100)))
-	local copper = floor(abs(mod(amount, 100)))
+	local gold = floor(value / 10000)
+	local silver = floor(mod(value / 100, 100))
+	local copper = floor(mod(value, 100))
+
+	if not style or style == "smart" then
+		local str = format("%s%s", color, prefix)
+		if gold > 0 then
+			str = format("%s%d%s%s", str, gold, goldname, (silver > 0 or copper > 0) and " " or "")
+		end
+		if silver > 0 then
+			str = format("%s%d%s%s", str, silver, silvername, copper > 0 and " " or "")
+		end
+		if copper > 0 or value == 0 then
+			str = format("%s%d%s", str, copper, coppername)
+		end
+		return str.."|r"
+	end
 
 	if style == "full" then
 		if gold > 0 then
-			return format("%s%s%d|r%s%s|r %s%d|r%s%s|r %s%d|r%s%s|r", color, prefix, gold, COLOR_GOLD, GOLD_AMOUNT_SYMBOL, color, silver, COLOR_SILVER, SILVER_AMOUNT_SYMBOL, color, copper, COLOR_COPPER, COPPER_AMOUNT_SYMBOL)
+			return format("%s%s%d|r%s %s%d|r%s %s%d|r%s", color, prefix, gold, goldname, color, silver, silvername, color, copper, coppername)
 		elseif silver > 0 then
-			return format("%s%s%d|r%s%s|r %s%d|r%s%s|r", color, prefix, silver, COLOR_SILVER, SILVER_AMOUNT_SYMBOL, color, copper, COLOR_COPPER, COPPER_AMOUNT_SYMBOL)
+			return format("%s%s%d|r%s %s%d|r%s", color, prefix, silver, silvername, color, copper, coppername)
 		else
-			return format("%s%s%d|r%s%s|r", color, prefix, copper, COLOR_COPPER, COPPER_AMOUNT_SYMBOL)
+			return format("%s%s%d|r%s", color, prefix, copper, coppername)
 		end
 	elseif style == "short" then
 		if gold > 0 then
-			return format("%s%.1f|r%s%s|r", color, amount / 10000, COLOR_GOLD, GOLD_AMOUNT_SYMBOL)
+			return format("%s%.1f|r%s", color, amount / 10000, goldname)
 		elseif silver > 0 then
-			return format("%s%.1f|r%s%s|r", color, amount / 100, COLOR_SILVER, SILVER_AMOUNT_SYMBOL)
+			return format("%s%.1f|r%s", color, amount / 100, silvername)
 		else
-			return format("%s%d|r%s%s|r", color, copper, COLOR_COPPER, COPPER_AMOUNT_SYMBOL)
+			return format("%s%d|r%s", color, amount, coppername)
+		end
+	elseif style == "shortint" then
+		if gold > 0 then
+			return format("%s%s%d|r%s", color, prefix, gold, goldname)
+		elseif silver > 0 then
+			return format("%s%s%d|r%s", color, prefix, silver, silvername)
+		else
+			return format("%s%s%d|r%s", color, prefix, copper, coppername)
 		end
 	elseif style == "condensed" then
 		local postfix = ""
@@ -267,7 +298,15 @@ function BMF:FormatMoney(style, amount, colorize)
 	end
 
 	-- Shouldn't be here; punt
-	return self:FormatMoney("graphical", amount, colorize)
+	return self:FormatMoney(amount, colorize, "smart")
+end
+
+function BMF:FormatMoneyLDB(amount, colorize)
+	return self:FormatMoney(amount, colorize, self.db.profile.ldbstyle, not self.db.profile.ldbcoins)
+end
+
+function BMF:FormatMoneyTip(amount, colorize)
+	return self:FormatMoney(amount, colorize, self.db.profile.tipstyle, not self.db.profile.tipcoins)
 end
 
 local offset
@@ -293,12 +332,6 @@ end
 
 function BMF:SetProfile(key, value)
 	self.db.profile[key] = value
-
-	if key == "perchar" and value then
-		self.db.profile.allrealms = false
-	elseif key == "allrealms" and value then
-		self.db.profile.perchar = false
-	end
 
 	self:UpdateText()
 	self:UpdateTooltip()

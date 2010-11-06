@@ -47,19 +47,18 @@ function BMF:UpdateTooltip()
 	self:AddMoneyLines(self.session)
 
 	local data
-	if self.db.profile.perchar then
+	if self.db.profile.cashflow == "character" then
 		data = self.chardb
 	else
 		data = {}
 		l.mkdata(data)
-		local rkeys
-		if self.db.profile.allrealms then
-			rkeys = {}
+		local rkeys = {}
+		if self.db.profile.cashflow == "all" then
 			for k, _ in pairs(self.data) do
 				table.insert(rkeys, k)
 			end
-		else
-			rkeys = { self.realmkey }
+		elseif self.db.profile.cashflow == "realm" then
+			table.insert(rkeys, self.realmkey)
 		end
 
 		local fkeys = { self.factionkey }
@@ -113,14 +112,13 @@ function BMF:UpdateTooltip()
 	if self.db.profile.charlist or self.db.profile.guildlist then
 		tip:AddLine(" ")
 		local line = tip:AddLine("Total")
-		tip:SetCell(line, 2, self:FormatMoney(self.db.profile.tipstyle, total), hourly and 2 or 1)
+		tip:SetCell(line, 2, self:FormatMoneyTip(total), hourly and 2 or 1)
 	
 	end
 end
 
 function BMF:AddMoneyLines(tbl, when)
 	local hourly = self.db.profile.perhour
-	local style = self.db.profile.tipstyle
 	local tip = self.tip
 	local gained, spent, time
 	if when then
@@ -136,22 +134,21 @@ function BMF:AddMoneyLines(tbl, when)
 	time = time / 3600
 
 	local line
-	line = tip:AddLine(nil, self:FormatMoney(style, gained),
-		hourly and self:FormatMoney(style, gained / time) or nil)
+	line = tip:AddLine(nil, self:FormatMoneyTip(gained),
+		hourly and self:FormatMoneyTip(gained / time) or nil)
 	tip:SetCell(line, 1, "Gained", self.yellowfont)
-	line = tip:AddLine(nil, self:FormatMoney(style, spent),
-		hourly and self:FormatMoney(style, spent / time) or nil)
+	line = tip:AddLine(nil, self:FormatMoneyTip(spent),
+		hourly and self:FormatMoneyTip(spent / time) or nil)
 	tip:SetCell(line, 1, "Spent", self.yellowfont)
 	local profit = gained - spent
-	line = tip:AddLine(nil, self:FormatMoney(style, profit, true),
-		hourly and self:FormatMoney(style, profit / time, true) or nil)
+	line = tip:AddLine(nil, self:FormatMoneyTip(profit, true),
+		hourly and self:FormatMoneyTip(profit / time, true) or nil)
 	tip:SetCell(line, 1, profit >= 0 and "Profit" or "Loss", self.yellowfont)
 end
 
 function BMF:AddWealthList(tblname, header, ignoreplayer)
 	local tip = self.tip
 	local colspan = self.db.profile.perhour and 2 or 1
-	local style = self.db.profile.tipstyle
 	local total = 0
 	local line
 
@@ -176,7 +173,7 @@ function BMF:AddWealthList(tblname, header, ignoreplayer)
 		for _, name in pairs(t) do
 			line = tip:AddLine()
 			tip:SetCell(line, 1, name, self.yellowfont)
-			tip:SetCell(line, 2, self:FormatMoney(style, wealthlist[name]), colspan)
+			tip:SetCell(line, 2, self:FormatMoneyTip(wealthlist[name]), colspan)
 			total = total + wealthlist[name]
 		end
 	elseif ignoreplayer then

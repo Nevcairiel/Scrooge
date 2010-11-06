@@ -34,8 +34,9 @@ end
 local styles = {
 	condensed = "Condensed",
 	full = "Full",
-	graphical = "Graphical",
+	smart = "Smart",
 	short = "Short",
+	shortint = "Short (whole numbers)",
 }
 
 local options = {
@@ -55,6 +56,13 @@ local options = {
 		style = "dropdown",
 		order = 10,
 	    },
+	    ldbcoins = {
+		type = "toggle",
+		name = "Show Coins",
+		desc = "Show graphical coins instead of text.",
+		arg = "ldbcoins",
+		order = 15,
+	    },
 	    tipstyle = {
 		type = "select",
 		name = "Tooltip Money Style",
@@ -63,6 +71,13 @@ local options = {
 		values = styles,
 		style = "dropdown",
 		order = 20,
+	    },
+	    tipcoins = {
+		type = "toggle",
+		name = "Show Coins",
+		desc = "Show graphical coins instead of text.",
+		arg = "tipcoins",
+		order = 25,
 	    },
 	    sep1 = {
 		type = "header",
@@ -85,25 +100,21 @@ local options = {
 		width = "full",
 		order = 50,
 	    },
-	    perchar = {
-		type = "toggle",
-		name = "Show character-specific cashflow",
-		desc = "Restrict the cashflow statistics to display only the current character.",
-		arg = "perchar",
-		width = "full",
+	    cashflow = {
+		type = "select",
+		name = "Show cashflow:",
+		desc = "Select which set of cashflow statistics to show on the tooltip.",
+		arg = "cashflow",
+		values = {
+		    character = "Per-character",
+		    realm = "Per-realm",
+		    all = "Across all realms",
+		},
 		order = 60,
 	    },
-	    allrealms = {
-		type = "toggle",
-		name = "Show cashflow across all realms",
-		desc = "Include data from all realms in the cashflow statistics rather than only the current realm.",
-		arg = "allrealms",
-		width = "full",
-		order = 70,
-	    },
-	    cashflow = {
+	    cashflowhist = {
 		type = "multiselect",
-		name = "Show cashflow for:",
+		name = "Show cashflow history:",
 		desc = "Select which cashflow statistics to show on the tooltip.",
 		values = {
 		    today = "Today",
@@ -113,7 +124,7 @@ local options = {
 		},
 		get = cashflowget,
 		set = cashflowset,
-		order = 80,
+		order = 70,
 	    },
 	},
     },
@@ -171,7 +182,7 @@ local function charcb(realm, faction, name, data)
 	return {
 		money = {
 			type = "description",
-			name = format("Money: %s", BMF:FormatMoney(BMF.db.profile.tipstyle, data.money)),
+			name = format("Money: %s", BMF:FormatMoney(data.money)),
 			order = 10,
 		},
 		lastseen = {
@@ -206,7 +217,7 @@ local function guildcb(realm, faction, name, data)
 	return {
 		money = {
 			type = "description",
-			name = format("Guild Bank: %s", BMF:FormatMoney(BMF.db.profile.tipstyle, data.money)),
+			name = format("Guild Bank: %s", BMF:FormatMoney(data.money)),
 			order = 10,
 		},
 		spacer = {
