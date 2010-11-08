@@ -63,6 +63,11 @@ local options = {
 		arg = "ldbcoins",
 		order = 15,
 	    },
+	    linebreak = {
+		type = "description",
+		name = "",
+		order = 17,
+	    },
 	    tipstyle = {
 		type = "select",
 		name = "Tooltip Money Style",
