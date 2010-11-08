@@ -1,34 +1,34 @@
-local BMF = BrokerMoneyFu
+local Scrooge = Scrooge
 local ACR = LibStub("AceConfigRegistry-3.0")
 local ACD = LibStub("AceConfigDialog-3.0")
 if not ACR and ACD then return end
 
 local function profileget(info)
-	return BMF.db.profile[info.arg]
+	return Scrooge.db.profile[info.arg]
 end
 
 local function profileset(info, value)
-	BMF:SetProfile(info.arg, value)
+	Scrooge:SetProfile(info.arg, value)
 end
 
 local function cashflowget(info, key)
-	return BMF.db.profile[key]
+	return Scrooge.db.profile[key]
 end
 
 local function cashflowset(info, key, value)
-	BMF:SetProfile(key, value)
+	Scrooge:SetProfile(key, value)
 end
 
 local function deletechar(info)
-	BMF:DeleteCharacter(info.arg.realm, info.arg.faction, info.arg.char)
+	Scrooge:DeleteCharacter(info.arg.realm, info.arg.faction, info.arg.char)
 end
 
 local function deleteguild(info)
-	BMF:DeleteGuild(info.arg.realm, info.arg.faction, info.arg.guild)
+	Scrooge:DeleteGuild(info.arg.realm, info.arg.faction, info.arg.guild)
 end
 
 local function addguild(info, value)
-	BMF:AddGuild(value)
+	Scrooge:AddGuild(value)
 end
 
 local styles = {
@@ -43,7 +43,7 @@ local options = {
     global = {
 	type = "group",
 	order = 10,
-	name = "Broker: MoneyFu",
+	name = "Scrooge",
 	get = profileget,
 	set = profileset,
 	args = {
@@ -169,7 +169,7 @@ local function poprealm(realm, faction, data, callback)
 end
 
 local function charcb(realm, faction, name, data)
-	local ndays = BMF:Today() - data.day
+	local ndays = Scrooge:Today() - data.day
 	local lastonline
 	if ndays < 1 then
 		lastonline = "Today"
@@ -182,7 +182,7 @@ local function charcb(realm, faction, name, data)
 	return {
 		money = {
 			type = "description",
-			name = format("Money: %s", BMF:FormatMoney(data.money)),
+			name = format("Money: %s", Scrooge:FormatMoney(data.money)),
 			order = 10,
 		},
 		lastseen = {
@@ -207,7 +207,7 @@ local function charcb(realm, faction, name, data)
 			},
 			confirm = true,
 			confirmText = format("Are you sure you wish to delete %s? All saved cashflow statistics will be purged from the database.", name),
-			disabled = realm == BMF.realmkey and faction == BMF.factionkey and name == BMF.playername,
+			disabled = realm == Scrooge.realmkey and faction == Scrooge.factionkey and name == Scrooge.playername,
 			order = 40,
 		},
 	}
@@ -217,7 +217,7 @@ local function guildcb(realm, faction, name, data)
 	return {
 		money = {
 			type = "description",
-			name = format("Guild Bank: %s", BMF:FormatMoney(data.money)),
+			name = format("Guild Bank: %s", Scrooge:FormatMoney(data.money)),
 			order = 10,
 		},
 		spacer = {
@@ -257,10 +257,10 @@ local function mkcharoptions()
 
 	lastorder = 20
 
-	c.current = poprealm(BMF.realmkey, BMF.factionkey, BMF.realmdb.chars, charcb)
-	for rname, rdata in pairs(BMF.data) do
+	c.current = poprealm(Scrooge.realmkey, Scrooge.factionkey, Scrooge.realmdb.chars, charcb)
+	for rname, rdata in pairs(Scrooge.data) do
 		for fname, fdata in pairs(rdata) do
-			if not (rname == BMF.realmkey and fname == BMF.factionkey) and next(fdata.chars) then
+			if not (rname == Scrooge.realmkey and fname == Scrooge.factionkey) and next(fdata.chars) then
 				c[rname.." - "..fname] = poprealm(rname, fname, fdata.chars, charcb)
 			end
 		end
@@ -290,7 +290,7 @@ local function mkguildoptions()
 	}
 	c.helptext = {
 		type = "description",
-		name = "Entering a guild name below will cause MoneyFu to consider it to be a 'personal guild'. It will add the guild bank balance when calculating your total wealth, and also include bank deposits and withdrawls in your cashflow summary. This feature should only be used on guilds that you control completely and have exclusive access to the bank.",
+		name = "Entering a guild name below will cause Scrooge to consider it to be a 'personal guild'. It will add the guild bank balance when calculating your total wealth, and also include bank deposits and withdrawls in your cashflow summary. This feature should only be used on guilds that you control completely and have exclusive access to the bank.",
 		order = 30,
 	}
 	c.addguild = {
@@ -304,12 +304,12 @@ local function mkguildoptions()
 
 	lastorder = 50
 
-	if next(BMF.realmdb.guilds) then
-		c.current = poprealm(BMF.realmkey, BMF.factionkey, BMF.realmdb.guilds, guildcb)
+	if next(Scrooge.realmdb.guilds) then
+		c.current = poprealm(Scrooge.realmkey, Scrooge.factionkey, Scrooge.realmdb.guilds, guildcb)
 	end
-	for rname, rdata in pairs(BMF.data) do
+	for rname, rdata in pairs(Scrooge.data) do
 		for fname, fdata in pairs(rdata) do
-			if not (rname == BMF.realmkey and fname == BMF.factionkey) and next(fdata.guilds) then
+			if not (rname == Scrooge.realmkey and fname == Scrooge.factionkey) and next(fdata.guilds) then
 				c[rname.." - "..fname] = poprealm(rname, fname, fdata.guilds, guildcb)
 			end
 		end
@@ -318,11 +318,11 @@ local function mkguildoptions()
 	return options.guilds
 end
 
-function BMF:SetupConfig()
-	ACR:RegisterOptionsTable("Broker: MoneyFu", options.global)
-	self.optref = ACD:AddToBlizOptions("Broker: MoneyFu", "Broker: MoneyFu")
-	ACR:RegisterOptionsTable("Broker: MoneyFu - Characters", mkcharoptions)
-	ACD:AddToBlizOptions("Broker: MoneyFu - Characters", "Characters", "Broker: MoneyFu")
-	ACR:RegisterOptionsTable("Broker: MoneyFu - Guilds", mkguildoptions)
-	ACD:AddToBlizOptions("Broker: MoneyFu - Guilds", "Guilds", "Broker: MoneyFu")
+function Scrooge:SetupConfig()
+	ACR:RegisterOptionsTable("Scrooge", options.global)
+	self.optref = ACD:AddToBlizOptions("Scrooge", "Scrooge")
+	ACR:RegisterOptionsTable("Scrooge - Characters", mkcharoptions)
+	ACD:AddToBlizOptions("Scrooge - Characters", "Characters", "Scrooge")
+	ACR:RegisterOptionsTable("Scrooge - Guilds", mkguildoptions)
+	ACD:AddToBlizOptions("Scrooge - Guilds", "Guilds", "Scrooge")
 end

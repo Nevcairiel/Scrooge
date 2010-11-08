@@ -1,12 +1,12 @@
 local l = select(2, ...)
-local addonname = "Broker_MoneyFu"
-BrokerMoneyFu = LibStub("AceAddon-3.0"):NewAddon(addonname, "AceEvent-3.0")
-local BMF = BrokerMoneyFu
+l.addonname = "Scrooge"
+Scrooge = LibStub("AceAddon-3.0"):NewAddon(l.addonname, "AceEvent-3.0")
+local Scrooge = Scrooge
 
 local LDB = LibStub('LibDataBroker-1.1')
 if not LDB then return end
 
---local L = LibStub:GetLibrary("AceLocale-3.0"):GetLocale(addonname)
+--local L = LibStub:GetLibrary("AceLocale-3.0"):GetLocale(l.addonname)
 
 local historysize = 29
 
@@ -23,7 +23,7 @@ local function clearmoney(tbl, when)
 end
 
 local function purgemoney(tbl)
-	local cutoff = BMF:Today() - historysize
+	local cutoff = Scrooge:Today() - historysize
 	for k in pairs(tbl.gained) do
 		if k < cutoff then
 			tbl.gained[k] = nil
@@ -46,7 +46,7 @@ local function storemoney(tbl, amount, elapsed, when)
 	local spent = ((amount < 0) and -amount or 0)
 	local elapsed = elapsed or 0
 	if when then
-		if BMF:Today() - when > historysize then return end
+		if Scrooge:Today() - when > historysize then return end
 		tbl.gained[when] = (tbl.gained[when] or 0) + gained
 		tbl.spent[when] = (tbl.spent[when] or 0) + spent
 		tbl.time[when] = (tbl.time[when] or 0) + elapsed
@@ -57,7 +57,7 @@ local function storemoney(tbl, amount, elapsed, when)
 	end
 end
 
-function BMF:OnInitialize()
+function Scrooge:OnInitialize()
 	local defaults = {
 		profile = {
 			ldbstyle = "smart",
@@ -76,23 +76,23 @@ function BMF:OnInitialize()
 		},
 	}
 
-	self.db = LibStub("AceDB-3.0"):New("BrokerMoneyFuDB", defaults, true)
+	self.db = LibStub("AceDB-3.0"):New("ScroogeDB", defaults, true)
 	if not self.db.global.version then
 		self.db.global.version = 1
 	end
 	self:UpgradeDB()
 
-	self.ldb = LDB:NewDataObject(addonname, {
+	self.ldb = LDB:NewDataObject(l.addonname, {
 		type = "data source",
 		icon = "Interface\\Minimap\\Tracking\\Auctioneer",
-		label = "MoneyFu",
-		text = "MoneyFu",
+		label = "Scrooge",
+		text = "Scrooge",
 		OnEnter = self.OnLDBEnter,
 		OnLeave = self.OnLDBLeave,
 		OnClick = self.OnLDBClick,
 	})
 
-	self.yellowfont = CreateFont("MoneyFuYellow")
+	self.yellowfont = CreateFont("ScroogeYellow")
 	self.yellowfont:CopyFontObject(GameTooltipText)
 	self.yellowfont:SetTextColor(1, 1, 0)
 
@@ -100,16 +100,16 @@ function BMF:OnInitialize()
 	self:SetupConfig()
 end
 
-function BMF:UpgradeDB()
+function Scrooge:UpgradeDB()
 	self.db.profile.perchar = nil
 	self.db.profile.allrealms = nil
 end
 
-function BMF:ResetSession()
+function Scrooge:ResetSession()
 	self.session = {}
 end
 
-function BMF:OnEnable()
+function Scrooge:OnEnable()
 	self.playername = UnitName("player")
 	self.realmkey = GetRealmName()
 	self.factionkey = UnitFactionGroup("player")
@@ -158,7 +158,7 @@ function BMF:OnEnable()
 end
 
 local lastupdate
-function BMF:CheckMoney()
+function Scrooge:CheckMoney()
 	local now = time()
 	local today = self:Today()
 	local money = GetMoney()
@@ -193,7 +193,7 @@ function BMF:CheckMoney()
 end
 
 local lastguild
-function BMF:CheckGuildMoney()
+function Scrooge:CheckGuildMoney()
 	if not IsInGuild() then return end
 
 	local guildname = GetGuildInfo("player")
@@ -215,7 +215,7 @@ function BMF:CheckGuildMoney()
 	self:CheckMoney()
 end
 
-function BMF:UpdateText()
+function Scrooge:UpdateText()
 	local money = GetMoney()
 
 	self.ldb.text = self:FormatMoneyLDB(money)
@@ -229,7 +229,7 @@ local COLOR_GOLD = "|cffffd700"
 local ICON_COPPER = "|TInterface\\MoneyFrame\\UI-CopperIcon:14:14:2:0|t"
 local ICON_SILVER = "|TInterface\\MoneyFrame\\UI-SilverIcon:14:14:2:0|t"
 local ICON_GOLD = "|TInterface\\MoneyFrame\\UI-GoldIcon:14:14:2:0|t"
-function BMF:FormatMoney(amount, colorize, style, textonly)
+function Scrooge:FormatMoney(amount, colorize, style, textonly)
 	local prefix = (amount < 0) and "-" or ""
 	local color = ""
 	local coppername = textonly and format("%s%s|r", COLOR_COPPER, COPPER_AMOUNT_SYMBOL) or ICON_COPPER
@@ -301,11 +301,11 @@ function BMF:FormatMoney(amount, colorize, style, textonly)
 	return self:FormatMoney(amount, colorize, "smart")
 end
 
-function BMF:FormatMoneyLDB(amount, colorize)
+function Scrooge:FormatMoneyLDB(amount, colorize)
 	return self:FormatMoney(amount, colorize, self.db.profile.ldbstyle, not self.db.profile.ldbcoins)
 end
 
-function BMF:FormatMoneyTip(amount, colorize)
+function Scrooge:FormatMoneyTip(amount, colorize)
 	return self:FormatMoney(amount, colorize, self.db.profile.tipstyle, not self.db.profile.tipcoins)
 end
 
@@ -326,18 +326,18 @@ local function serveroffset()
 	return offset
 end
 
-function BMF:Today()
+function Scrooge:Today()
 	return floor((time() / 3600 + serveroffset()) / 24)
 end
 
-function BMF:SetProfile(key, value)
+function Scrooge:SetProfile(key, value)
 	self.db.profile[key] = value
 
 	self:UpdateText()
 	self:UpdateTooltip()
 end
 
-function BMF:VacuumDB(realm, faction)
+function Scrooge:VacuumDB(realm, faction)
 	if not self.data[realm] or not self.data[realm][faction] then
 		return
 	end
@@ -350,13 +350,13 @@ function BMF:VacuumDB(realm, faction)
 	end
 end
 
-function BMF:AddGuild(name)
+function Scrooge:AddGuild(name)
 	self.realmdb.guilds[name] = {
 		money = 0
 	}
 end
 
-function BMF:DeleteCharacter(realm, faction, name)
+function Scrooge:DeleteCharacter(realm, faction, name)
 	if not self.data[realm] or not self.data[realm][faction] then
 		return
 	end
@@ -365,7 +365,7 @@ function BMF:DeleteCharacter(realm, faction, name)
 	self:VacuumDB(realm, faction)
 end
 
-function BMF:DeleteGuild(realm, faction, name)
+function Scrooge:DeleteGuild(realm, faction, name)
 	if not self.data[realm] or not self.data[realm][faction] then
 		return
 	end
@@ -374,9 +374,9 @@ function BMF:DeleteGuild(realm, faction, name)
 	self:VacuumDB(realm, faction)
 end
 
-function BMF.OnLDBClick(frame, button)
+function Scrooge.OnLDBClick(frame, button)
 	if button == "RightButton" then
-		BMF.OnLDBLeave(frame)
-		BMF:ShowMenu(frame)
+		Scrooge.OnLDBLeave(frame)
+		Scrooge:ShowMenu(frame)
 	end
 end

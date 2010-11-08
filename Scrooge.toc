@@ -1,9 +1,9 @@
 ## Interface: 40000
-## Title: Broker: MoneyFu
+## Title: Scrooge
 ## Notes: Keeps track of gold and cash flow across multiple characters
 ## Version: @project-version@
 ## Author: Thelibrarian
-## SavedVariables: BrokerMoneyFuDB
+## SavedVariables: ScroogeDB
 ## OptionalDeps: Ace3, LibQTip-1.0
 
 #@no-lib-strip@

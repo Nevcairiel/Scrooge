@@ -1,5 +1,5 @@
 local l = select(2, ...)
-local BMF = BrokerMoneyFu
+local Scrooge = Scrooge
 
 local LibQTip = LibStub("LibQTip-1.0")
 if not LibQTip then return end
@@ -33,7 +33,7 @@ local function wealthsort(a, b)
 	return wealthlist[a] < wealthlist[b]
 end
 
-function BMF:UpdateTooltip()
+function Scrooge:UpdateTooltip()
 	local tip = self.tip
 	local hourly = self.db.profile.perhour
 	local today = self:Today()
@@ -117,7 +117,7 @@ function BMF:UpdateTooltip()
 	end
 end
 
-function BMF:AddMoneyLines(tbl, when)
+function Scrooge:AddMoneyLines(tbl, when)
 	local hourly = self.db.profile.perhour
 	local tip = self.tip
 	local gained, spent, time
@@ -146,7 +146,7 @@ function BMF:AddMoneyLines(tbl, when)
 	tip:SetCell(line, 1, profit >= 0 and "Profit" or "Loss", self.yellowfont)
 end
 
-function BMF:AddWealthList(tblname, header, ignoreplayer)
+function Scrooge:AddWealthList(tblname, header, ignoreplayer)
 	local tip = self.tip
 	local colspan = self.db.profile.perhour and 2 or 1
 	local total = 0
@@ -183,16 +183,16 @@ function BMF:AddWealthList(tblname, header, ignoreplayer)
 	return total
 end
 
-function BMF.OnLDBEnter(frame)
-	BMF.tip = LibQTip:Acquire("BrokerMoneyFuTip")
-	BMF.tip:SmartAnchorTo(frame)
-	BMF.tip:SetHeaderFont(GameTooltipText)
+function Scrooge.OnLDBEnter(frame)
+	Scrooge.tip = LibQTip:Acquire("ScroogeTip")
+	Scrooge.tip:SmartAnchorTo(frame)
+	Scrooge.tip:SetHeaderFont(GameTooltipText)
 
-	BMF:UpdateTooltip()
-	BMF.tip:Show()
+	Scrooge:UpdateTooltip()
+	Scrooge.tip:Show()
 end
 
-function BMF.OnLDBLeave(frame)
-	LibQTip:Release(BMF.tip)
-	BMF.tip = nil
+function Scrooge.OnLDBLeave(frame)
+	LibQTip:Release(Scrooge.tip)
+	Scrooge.tip = nil
 end

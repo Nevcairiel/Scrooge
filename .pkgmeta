@@ -1,4 +1,4 @@
-package-as: Broker_MoneyFu
+package-as: Scrooge
 
 externals:
   libs/LibStub:
