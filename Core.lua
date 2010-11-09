@@ -1,6 +1,6 @@
-local l = select(2, ...)
-l.addonname = "Scrooge"
-Scrooge = LibStub("AceAddon-3.0"):NewAddon(l.addonname, "AceEvent-3.0")
+local private = select(2, ...)
+private.addonname = "Scrooge"
+Scrooge = LibStub("AceAddon-3.0"):NewAddon(private.addonname, "AceEvent-3.0")
 local Scrooge = Scrooge
 
 local LDB = LibStub('LibDataBroker-1.1')
@@ -10,7 +10,7 @@ if not LDB then return end
 
 local historysize = 31
 
-function l.mkdata(tbl)
+function private.mkdata(tbl)
 	tbl.spent = {}
 	tbl.gained = {}
 	tbl.time = {}
@@ -82,7 +82,7 @@ function Scrooge:OnInitialize()
 	end
 	self:UpgradeDB()
 
-	self.ldb = LDB:NewDataObject(l.addonname, {
+	self.ldb = LDB:NewDataObject(private.addonname, {
 		type = "data source",
 		icon = "Interface\\Minimap\\Tracking\\Auctioneer",
 		label = "Scrooge",
@@ -126,14 +126,14 @@ function Scrooge:OnEnable()
 			guilds = {},
 			chars = {},
 		}
-		l.mkdata(self.data[self.realmkey][self.factionkey])
+		private.mkdata(self.data[self.realmkey][self.factionkey])
 	end
 
 	self.realmdb = self.data[self.realmkey][self.factionkey]
 
 	if not self.realmdb.chars[self.playername] then
 		self.realmdb.chars[self.playername] = {}
-		l.mkdata(self.realmdb.chars[self.playername])
+		private.mkdata(self.realmdb.chars[self.playername])
 	end
 	self.chardb = self.realmdb.chars[self.playername]
 

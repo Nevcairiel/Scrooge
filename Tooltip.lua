@@ -1,4 +1,4 @@
-local l = select(2, ...)
+local private = select(2, ...)
 local Scrooge = Scrooge
 
 local LibQTip = LibStub("LibQTip-1.0")
@@ -51,7 +51,7 @@ function Scrooge:UpdateTooltip()
 		data = self.chardb
 	else
 		data = {}
-		l.mkdata(data)
+		private.mkdata(data)
 		local rkeys = {}
 		if self.db.profile.cashflow == "all" then
 			for k, _ in pairs(self.data) do
