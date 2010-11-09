@@ -8,7 +8,7 @@ if not LDB then return end
 
 --local L = LibStub:GetLibrary("AceLocale-3.0"):GetLocale(l.addonname)
 
-local historysize = 29
+local historysize = 31
 
 function l.mkdata(tbl)
 	tbl.spent = {}
