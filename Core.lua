@@ -6,7 +6,7 @@ local Scrooge = Scrooge
 local LDB = LibStub('LibDataBroker-1.1')
 if not LDB then return end
 
---local L = LibStub:GetLibrary("AceLocale-3.0"):GetLocale(l.addonname)
+local L = LibStub:GetLibrary("AceLocale-3.0"):GetLocale(private.addonname)
 
 local historysize = 31
 
@@ -85,8 +85,8 @@ function Scrooge:OnInitialize()
 	self.ldb = LDB:NewDataObject(private.addonname, {
 		type = "data source",
 		icon = "Interface\\Minimap\\Tracking\\Auctioneer",
-		label = "Scrooge",
-		text = "Scrooge",
+		label = L["Scrooge"],
+		text = L["Scrooge"],
 		OnEnter = self.OnLDBEnter,
 		OnLeave = self.OnLDBLeave,
 		OnClick = self.OnLDBClick,

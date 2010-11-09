@@ -1,4 +1,7 @@
+local private = select(2, ...)
 local Scrooge = Scrooge
+
+local L = LibStub:GetLibrary("AceLocale-3.0"):GetLocale(private.addonname)
 
 function Scrooge:CreateMenu()
 	local menu = CreateFrame("Frame", "Scrooge_Menu")
@@ -20,7 +23,7 @@ function Scrooge.InitializeMenu(frame, level)
 	if level == 1 then
 		info.isTitle = 1
 		info.notCheckable = 1
-		info.text = "Scrooge"
+		info.text = L["Scrooge"]
 		UIDropDownMenu_AddButton(info, level)
 
 		info.disabled = 1
@@ -33,24 +36,24 @@ function Scrooge.InitializeMenu(frame, level)
 		info.isNotRadio = true
 		info.checked = Scrooge.db.profile.crossfaction
 		info.arg1 = "crossfaction"
-		info.text = "Show both factions"
+		info.text = L["Show both factions"]
 		UIDropDownMenu_AddButton(info, level)
 
 		wipe(info)
 		info.func = Scrooge.MenuSetCashflow
 		info.arg1 = "all"
 		info.checked = Scrooge.db.profile.cashflow == "all"
-		info.text = format("%s %s", "Show cashflow:", "Across all realms")
+		info.text = format("%s %s", L["Show cashflow:"], L["Across all realms"])
 		UIDropDownMenu_AddButton(info, level)
 
 		info.arg1 = "character"
 		info.checked = Scrooge.db.profile.cashflow == "character"
-		info.text = format("%s %s", "Show cashflow:", "Per-character")
+		info.text = format("%s %s", L["Show cashflow:"], L["Per-character"])
 		UIDropDownMenu_AddButton(info, level)
 
 		info.arg1 = "realm"
 		info.checked = Scrooge.db.profile.cashflow == "realm"
-		info.text = format("%s %s", "Show cashflow:", "Per-realm")
+		info.text = format("%s %s", L["Show cashflow:"], L["Per-realm"])
 		UIDropDownMenu_AddButton(info, level)
 
 		wipe(info)
@@ -60,15 +63,15 @@ function Scrooge.InitializeMenu(frame, level)
 
 		info.disabled = nil
 		info.func = Scrooge.MenuResetSession
-		info.text = "Reset Session"
+		info.text = L["Reset Session"]
 		UIDropDownMenu_AddButton(info, level)
 
 		info.func = Scrooge.MenuSettings
-		info.text = "Settings..."
+		info.text = L["Settings..."]
 		UIDropDownMenu_AddButton(info, level)
 
 		info.func = Scrooge.HideMenu
-		info.text = "Close"
+		info.text = CLOSE
 		UIDropDownMenu_AddButton(info, level)
 	end
 end

@@ -1,7 +1,10 @@
+local private = select(2, ...)
 local Scrooge = Scrooge
 local ACR = LibStub("AceConfigRegistry-3.0")
 local ACD = LibStub("AceConfigDialog-3.0")
 if not ACR and ACD then return end
+
+local L = LibStub:GetLibrary("AceLocale-3.0"):GetLocale(private.addonname)
 
 local function profileget(info)
 	return Scrooge.db.profile[info.arg]
@@ -32,25 +35,25 @@ local function addguild(info, value)
 end
 
 local styles = {
-	condensed = "Condensed",
-	full = "Full",
-	smart = "Smart",
-	short = "Short",
-	shortint = "Short (whole numbers)",
+	condensed = L["Condensed"],
+	full = L["Full"],
+	smart = L["Smart"],
+	short = L["Short"],
+	shortint = L["Short (whole numbers)"],
 }
 
 local options = {
     global = {
 	type = "group",
 	order = 10,
-	name = "Scrooge",
+	name = L["Scrooge"],
 	get = profileget,
 	set = profileset,
 	args = {
 	    ldbstyle = {
 		type = "select",
-		name = "Broker Money Style",
-		desc = "Style to display the data broker text.",
+		name = L["Broker Money Style"],
+		desc = L["Style to display the data broker text."],
 		arg = "ldbstyle",
 		values = styles,
 		style = "dropdown",
@@ -58,8 +61,8 @@ local options = {
 	    },
 	    ldbcoins = {
 		type = "toggle",
-		name = "Show Coins",
-		desc = "Show graphical coins instead of text.",
+		name = L["Show Coins"],
+		desc = L["Show graphical coins instead of text."],
 		arg = "ldbcoins",
 		order = 15,
 	    },
@@ -70,8 +73,8 @@ local options = {
 	    },
 	    tipstyle = {
 		type = "select",
-		name = "Tooltip Money Style",
-		desc = "Style to display money on the tooltip.",
+		name = L["Tooltip Money Style"],
+		desc = L["Style to display money on the tooltip."],
 		arg = "tipstyle",
 		values = styles,
 		style = "dropdown",
@@ -79,8 +82,8 @@ local options = {
 	    },
 	    tipcoins = {
 		type = "toggle",
-		name = "Show Coins",
-		desc = "Show graphical coins instead of text.",
+		name = L["Show Coins"],
+		desc = L["Show graphical coins instead of text."],
 		arg = "tipcoins",
 		order = 25,
 	    },
@@ -91,41 +94,41 @@ local options = {
 	    },
 	    crossfaction = {
 		type = "toggle",
-		name = "Show cross-faction data",
-		desc = "Include characters from the opposing faction in both the character list and the statistics totals.",
+		name = L["Show cross-faction data"],
+		desc = L["Include characters from the opposing faction in both the character list and the statistics totals."],
 		arg = "crossfaction",
 		width = "full",
 		order = 40,
 	    },
 	    perhour = {
 		type = "toggle",
-		name = "Show per-hour cashflow",
-		desc = "Show an extra column in the tooltip with the hourly cashflow based on time played.",
+		name = L["Show per-hour cashflow"],
+		desc = L["Show an extra column in the tooltip with the hourly cashflow based on time played."],
 		arg = "perhour",
 		width = "full",
 		order = 50,
 	    },
 	    cashflow = {
 		type = "select",
-		name = "Show cashflow:",
-		desc = "Select which set of cashflow statistics to show on the tooltip.",
+		name = L["Show cashflow:"],
+		desc = L["Select which set of cashflow statistics to show on the tooltip."],
 		arg = "cashflow",
 		values = {
-		    character = "Per-character",
-		    realm = "Per-realm",
-		    all = "Across all realms",
+		    character = L["Per-character"],
+		    realm = L["Per-realm"],
+		    all = L["Across all realms"],
 		},
 		order = 60,
 	    },
 	    cashflowhist = {
 		type = "multiselect",
-		name = "Show cashflow history:",
-		desc = "Select which cashflow statistics to show on the tooltip.",
+		name = L["Show cashflow history:"],
+		desc = L["Select which cashflow statistics to show on the tooltip."],
 		values = {
-		    today = "Today",
-		    yesterday = "Yesterday",
-		    last7 = "Last 7 Days",
-		    last30 = "Last 30 Days",
+		    today = L["Today"],
+		    yesterday = L["Yesterday"],
+		    last7 = L["Last 7 Days"],
+		    last30 = L["Last 30 Days"],
 		},
 		get = cashflowget,
 		set = cashflowset,
@@ -135,15 +138,15 @@ local options = {
     },
     chars = {
 	type = "group",
-	name = "Characters",
-	desc = "View or remove characters from the database.",
+	name = L["Characters"],
+	desc = L["View or remove characters from the database."],
 	order = 20,
 	args = {},
     },
     guilds = {
 	type = "group",
-	name = "Guilds",
-	desc = "Add or remove guilds from the database.",
+	name = L["Guilds"],
+	desc = L["Add or remove guilds from the database."],
 	order = 30,
 	args = {},
     },
@@ -177,22 +180,22 @@ local function charcb(realm, faction, name, data)
 	local ndays = Scrooge:Today() - data.day
 	local lastonline
 	if ndays < 1 then
-		lastonline = "Today"
+		lastonline = L["Today"]
 	elseif ndays == 1 then
-		lastonline = "Yesterday"
+		lastonline = L["Yesterday"]
 	else
-		lastonline = format("%d days ago", ndays)
+		lastonline = format(L["%d days ago"], ndays)
 	end
 
 	return {
 		money = {
 			type = "description",
-			name = format("Money: %s", Scrooge:FormatMoney(data.money)),
+			name = format(L["Money: %s"], Scrooge:FormatMoney(data.money)),
 			order = 10,
 		},
 		lastseen = {
 			type = "description",
-			name = format("Last online: %s", lastonline),
+			name = format(L["Last online: %s"], lastonline),
 			order = 20,
 		},
 		spacer = {
@@ -202,8 +205,8 @@ local function charcb(realm, faction, name, data)
 		},
 		delete = {
 			type = "execute",
-			name = "Delete",
-			desc = "Delete this character from the database, wiping out all cashflow statistics.",
+			name = DELETE,
+			desc = L["Delete this character from the database, wiping out all cashflow statistics."],
 			func = deletechar,
 			arg = {
 				realm = realm,
@@ -211,7 +214,7 @@ local function charcb(realm, faction, name, data)
 				char = name,
 			},
 			confirm = true,
-			confirmText = format("Are you sure you wish to delete %s? All saved cashflow statistics will be purged from the database.", name),
+			confirmText = format(L["Are you sure you wish to delete %s? All saved cashflow statistics will be purged from the database."], name),
 			disabled = realm == Scrooge.realmkey and faction == Scrooge.factionkey and name == Scrooge.playername,
 			order = 40,
 		},
@@ -222,7 +225,7 @@ local function guildcb(realm, faction, name, data)
 	return {
 		money = {
 			type = "description",
-			name = format("Guild Bank: %s", Scrooge:FormatMoney(data.money)),
+			name = format(L["Guild Bank: %s"], Scrooge:FormatMoney(data.money)),
 			order = 10,
 		},
 		spacer = {
@@ -232,8 +235,8 @@ local function guildcb(realm, faction, name, data)
 		},
 		delete = {
 			type = "execute",
-			name = "Delete",
-			desc = "Delete this guild from the database, preventing it from being tracked as a personal guild.",
+			name = DELETE,
+			desc = L["Delete this guild from the database, preventing it from being tracked as a personal guild."],
 			func = deleteguild,
 			arg = {
 				realm = realm,
@@ -251,8 +254,8 @@ local function mkcharoptions()
 
 	c.charlist = {
 		type = "toggle",
-		name = "Show character list on tooltip",
-		desc = "Show a list of all your characters on the current realm and how much money they have on the tooltip.",
+		name = L["Show character list on tooltip"],
+		desc = L["Show a list of all your characters on the current realm and how much money they have on the tooltip."],
 		get = profileget,
 		set = profileset,
 		arg = "charlist",
@@ -280,8 +283,8 @@ local function mkguildoptions()
 
 	c.guildlist = {
 		type = "toggle",
-		name = "Show guild list on tooltip",
-		desc = "Show a list of all your defined personal guilds on the current realm and how much money is in the guild bank on the tooltip.",
+		name = L["Show guild list on tooltip"],
+		desc = L["Show a list of all your defined personal guilds on the current realm and how much money is in the guild bank on the tooltip."],
 		get = profileget,
 		set = profileset,
 		arg = "guildlist",
@@ -295,12 +298,12 @@ local function mkguildoptions()
 	}
 	c.helptext = {
 		type = "description",
-		name = "Entering a guild name below will cause Scrooge to consider it to be a 'personal guild'. It will add the guild bank balance when calculating your total wealth, and also include bank deposits and withdrawls in your cashflow summary. This feature should only be used on guilds that you control completely and have exclusive access to the bank.",
+		name = L["GUILD_HELP_TEXT"],
 		order = 30,
 	}
 	c.addguild = {
 		type = "input",
-		name = "Add Personal Guild",
+		name = L["Add Personal Guild"],
 		width = "double",
 		get = false,
 		set = addguild,
@@ -325,9 +328,9 @@ end
 
 function Scrooge:SetupConfig()
 	ACR:RegisterOptionsTable("Scrooge", options.global)
-	self.optref = ACD:AddToBlizOptions("Scrooge", "Scrooge")
+	self.optref = ACD:AddToBlizOptions("Scrooge", L["Scrooge"])
 	ACR:RegisterOptionsTable("Scrooge - Characters", mkcharoptions)
-	ACD:AddToBlizOptions("Scrooge - Characters", "Characters", "Scrooge")
+	ACD:AddToBlizOptions("Scrooge - Characters", L["Characters"], L["Scrooge"])
 	ACR:RegisterOptionsTable("Scrooge - Guilds", mkguildoptions)
-	ACD:AddToBlizOptions("Scrooge - Guilds", "Guilds", "Scrooge")
+	ACD:AddToBlizOptions("Scrooge - Guilds", L["Guilds"], L["Scrooge"])
 end

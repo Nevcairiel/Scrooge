@@ -12,6 +12,8 @@ embeds.xml
 
 libs\LibDataBroker\LibDataBroker-1.1.lua
 
+locale\locale.xml
+
 Core.lua
 Config.lua
 Menu.lua
