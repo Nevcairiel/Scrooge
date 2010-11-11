@@ -164,7 +164,9 @@ function Scrooge:AddWealthList(tblname, header, ignoreplayer)
 	if (not ignoreplayer and next(wealthlist)) or ignoreplayer and (next(wealthlist) ~= self.playername or next(wealthlist, self.playername)) then
 		local t = {}
 		for name in pairs(wealthlist) do
-			table.insert(t, name)
+			if name ~= self.playername then
+				table.insert(t, name)
+			end
 		end
 		table.sort(t, wealthsort)
 		tip:AddLine(" ")
