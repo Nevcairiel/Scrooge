@@ -73,6 +73,7 @@ function Scrooge:OnInitialize()
 			last30 = false,
 			charlist = true,
 			guildlist = true,
+			classcolor = true,
 		},
 	}
 
@@ -142,6 +143,9 @@ function Scrooge:OnEnable()
 		self.chardb.day = self:Today()
 	end
 
+	self.chardb.level = UnitLevel("player")
+	self.chardb.localclass, self.chardb.class = UnitClass("player")
+
 	purgemoney(self.chardb)
 	purgemoney(self.realmdb)
 
@@ -155,6 +159,7 @@ function Scrooge:OnEnable()
 	self:RegisterEvent("SEND_MAIL_COD_CHANGED", "UpdateText")
 	self:RegisterEvent("GUILDBANKFRAME_OPENED", "CheckGuildMoney")
 	self:RegisterEvent("GUILDBANK_UPDATE_MONEY", "CheckGuildMoney")
+	self:RegisterEvent("PLAYER_LEVEL_UP", "UpdateLevel")
 end
 
 local lastupdate
@@ -213,6 +218,10 @@ function Scrooge:CheckGuildMoney()
 	self.realmdb.guilds[guildname].money = money
 
 	self:CheckMoney()
+end
+
+function Scrooge:UpdateLevel(event, level)
+	self.chardb.level = level
 end
 
 function Scrooge:UpdateText()

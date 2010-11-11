@@ -30,7 +30,7 @@ end
 
 local wealthlist = {}
 local function wealthsort(a, b)
-	return wealthlist[a] < wealthlist[b]
+	return wealthlist[a].money < wealthlist[b].money
 end
 
 function Scrooge:UpdateTooltip()
@@ -154,11 +154,11 @@ function Scrooge:AddWealthList(tblname, header, ignoreplayer)
 
 	wipe(wealthlist)
 	for k, v in pairs(self.realmdb[tblname]) do
-		wealthlist[k] = v.money
+		wealthlist[k] = v
 	end
 	if self.db.profile.crossfaction and self.data[self.realmkey][self.otherfaction] then
 		for k, v in pairs(self.data[self.realmkey][self.otherfaction][tblname]) do
-			wealthlist[k] = v.money
+			wealthlist[k] = v
 		end
 	end
 	if (not ignoreplayer and next(wealthlist)) or ignoreplayer and (next(wealthlist) ~= self.playername or next(wealthlist, self.playername)) then
@@ -173,13 +173,19 @@ function Scrooge:AddWealthList(tblname, header, ignoreplayer)
 		line = tip:AddHeader(header)
 		tip:SetCell(line, 2, L["Amount"], colspan)
 		for _, name in pairs(t) do
+			local w = wealthlist[name]
 			line = tip:AddLine()
-			tip:SetCell(line, 1, name, self.yellowfont)
-			tip:SetCell(line, 2, self:FormatMoneyTip(wealthlist[name]), colspan)
-			total = total + wealthlist[name]
+			if self.db.profile.classcolor and w.class then
+				local cc = RAID_CLASS_COLORS[w.class]
+				tip:SetCell(line, 1, format("|c%s%s|r", format("ff%.2x%.2x%.2x", cc.r * 255, cc.g * 255, cc.b * 255), name))
+			else
+				tip:SetCell(line, 1, name, self.yellowfont)
+			end
+			tip:SetCell(line, 2, self:FormatMoneyTip(w.money), colspan)
+			total = total + w.money
 		end
 	elseif ignoreplayer then
-		total = wealthlist[self.playername]
+		total = wealthlist[self.playername].money
 	end
 
 	return total

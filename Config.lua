@@ -187,7 +187,7 @@ local function charcb(realm, faction, name, data)
 		lastonline = format(L["%d days ago"], ndays)
 	end
 
-	return {
+	local ret = {
 		money = {
 			type = "description",
 			name = format(L["Money: %s"], Scrooge:FormatMoney(data.money)),
@@ -219,6 +219,17 @@ local function charcb(realm, faction, name, data)
 			order = 40,
 		},
 	}
+
+	if data.level and data.class then
+		local cc = RAID_CLASS_COLORS[data.class]
+		ret.charinfo = {
+			type = "description",
+			name = format(PLAYER_LEVEL_NO_SPEC, data.level, format("ff%.2x%.2x%.2x", cc.r * 255, cc.g * 255, cc.b * 255), data.localclass),
+			order = 5,
+		}
+	end
+
+	return ret
 end
 
 local function guildcb(realm, faction, name, data)
@@ -261,6 +272,16 @@ local function mkcharoptions()
 		arg = "charlist",
 		width = "full",
 		order = 10,
+	}
+	c.classcolor = {
+		type = "toggle",
+		name = L["Use class colors on tooltip"],
+		desc = L["Colorize character names on the tooltip with the standard class colors."],
+		get = profileget,
+		set = profileset,
+		arg = "classcolor",
+		width = "full",
+		order = 15,
 	}
 
 	lastorder = 20
