@@ -273,6 +273,16 @@ local function mkcharoptions()
 		width = "full",
 		order = 10,
 	}
+	c.hideplayer = {
+		type = "toggle",
+		name = L["Hide player from character list"],
+		desc = L["Don't display the current player in the character list, show only alts. The current player is included in the total regardless."],
+		get = profileget,
+		set = profileset,
+		arg = "hideplayer",
+		width = "full",
+		order = 20,
+	}
 	c.classcolor = {
 		type = "toggle",
 		name = L["Use class colors on tooltip"],
@@ -281,10 +291,10 @@ local function mkcharoptions()
 		set = profileset,
 		arg = "classcolor",
 		width = "full",
-		order = 15,
+		order = 30,
 	}
 
-	lastorder = 20
+	lastorder = 40
 
 	c.current = poprealm(Scrooge.realmkey, Scrooge.factionkey, Scrooge.realmdb.chars, charcb)
 	for rname, rdata in pairs(Scrooge.data) do

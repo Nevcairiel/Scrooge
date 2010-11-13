@@ -74,6 +74,7 @@ function Scrooge:OnInitialize()
 			charlist = true,
 			guildlist = true,
 			classcolor = true,
+			hideplayer = true,
 		},
 	}
 

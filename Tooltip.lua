@@ -103,7 +103,7 @@ function Scrooge:UpdateTooltip()
 
 	local total = 0
 	if self.db.profile.charlist then
-		total = total + self:AddWealthList("chars", L["Characters"], true)
+		total = total + self:AddWealthList("chars", L["Characters"], self.db.profile.hideplayer)
 	end
 	if self.db.profile.guildlist then
 		total = total + self:AddWealthList("guilds", L["Guilds"])
