@@ -149,24 +149,24 @@ end
 function Scrooge:AddWealthList(tblname, header, ignoreplayer)
 	local tip = self.tip
 	local colspan = self.db.profile.perhour and 2 or 1
-	local total = 0
+	local total = ignoreplayer and GetMoney() or 0
 	local line
 
 	wipe(wealthlist)
 	for k, v in pairs(self.realmdb[tblname]) do
-		wealthlist[k] = v
+		if not ignoreplayer or k ~= self.playername then
+			wealthlist[k] = v
+		end
 	end
 	if self.db.profile.crossfaction and self.data[self.realmkey][self.otherfaction] then
 		for k, v in pairs(self.data[self.realmkey][self.otherfaction][tblname]) do
 			wealthlist[k] = v
 		end
 	end
-	if (not ignoreplayer and next(wealthlist)) or ignoreplayer and (next(wealthlist) ~= self.playername or next(wealthlist, self.playername)) then
+	if next(wealthlist) then
 		local t = {}
 		for name in pairs(wealthlist) do
-			if name ~= self.playername then
-				table.insert(t, name)
-			end
+			table.insert(t, name)
 		end
 		table.sort(t, wealthsort)
 		tip:AddLine(" ")
@@ -184,8 +184,6 @@ function Scrooge:AddWealthList(tblname, header, ignoreplayer)
 			tip:SetCell(line, 2, self:FormatMoneyTip(w.money), colspan)
 			total = total + w.money
 		end
-	elseif ignoreplayer then
-		total = wealthlist[self.playername].money
 	end
 
 	return total
