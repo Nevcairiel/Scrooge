@@ -34,35 +34,50 @@ local function wealthsort(a, b)
 end
 
 function Scrooge:UpdateTooltip()
+	if not self.tipanchor then return end
+
+	local pref = self.db.profile
+	if (self.db.profile.alt.modifier == "alt" and IsAltKeyDown()) or
+	   (self.db.profile.alt.modifier == "ctrl" and IsControlKeyDown()) or
+	   (self.db.profile.alt.modifier == "shift" and IsShiftKeyDown()) then
+		pref = self.db.profile.alt
+	end
+
+	if self.tip then
+		LibQTip:Release(self.tip)
+	end
+	self.tip = LibQTip:Acquire("ScroogeTip")
 	local tip = self.tip
-	local hourly = self.db.profile.perhour
+	local hourly = pref.perhour
 	local today = self:Today()
-	if not tip then return end
+
+	tip:SmartAnchorTo(self.tipanchor)
+	tip:SetHeaderFont(GameTooltipText)
 
 	tip:Clear()
 	tip:SetCellMarginH(20)
 	tip:SetColumnLayout(hourly and 3 or 2, "LEFT", "RIGHT", "RIGHT")
 
 	tip:AddHeader(L["This Session"], L["Amount"], hourly and L["Per Hour"] or nil)
-	self:AddMoneyLines(self.session)
+	self:AddMoneyLines(pref, self.session)
 
 	local data
-	if self.db.profile.cashflow == "character" then
+	if pref.cashflow == "character" then
 		data = self.chardb
 	else
 		data = {}
 		private.mkdata(data)
 		local rkeys = {}
-		if self.db.profile.cashflow == "all" then
+		if pref.cashflow == "all" then
 			for k, _ in pairs(self.data) do
 				table.insert(rkeys, k)
 			end
-		elseif self.db.profile.cashflow == "realm" then
+		elseif pref.cashflow == "realm" then
 			table.insert(rkeys, self.realmkey)
 		end
 
 		local fkeys = { self.factionkey }
-		if self.db.profile.crossfaction then
+		if pref.crossfaction then
 			table.insert(fkeys, self.otherfaction)
 		end
 
@@ -74,51 +89,52 @@ function Scrooge:UpdateTooltip()
 		end
 	end
 
-	if self.db.profile.today then
+	if pref.today then
 		tip:AddLine(" ")
 		tip:AddHeader(L["Today"], L["Amount"], hourly and L["Per Hour"] or nil)
-		self:AddMoneyLines(data, today)
+		self:AddMoneyLines(pref, data, today)
 	end
 
-	if self.db.profile.yesterday then
+	if pref.yesterday then
 		tip:AddLine(" ")
 		tip:AddHeader(L["Yesterday"], L["Amount"], hourly and L["Per Hour"] or nil)
-		self:AddMoneyLines(data, today - 1)
+		self:AddMoneyLines(pref, data, today - 1)
 	end
 
 	local cdata
-	if self.db.profile.last7 then
+	if pref.last7 then
 		cdata = consolidate(data, today - 6, today)
 		tip:AddLine(" ")
 		tip:AddHeader(L["Last 7 Days"],  L["Amount"], hourly and L["Per Hour"] or nil)
-		self:AddMoneyLines(cdata)
+		self:AddMoneyLines(pref, cdata)
 	end
 
-	if self.db.profile.last30 then
+	if pref.last30 then
 		cdata = consolidate(data, today - 29, today)
 		tip:AddLine(" ")
 		tip:AddHeader(L["Last 30 Days"],  L["Amount"], hourly and L["Per Hour"] or nil)
-		self:AddMoneyLines(cdata)
+		self:AddMoneyLines(pref, cdata)
 	end
 
 	local total = 0
-	if self.db.profile.charlist then
-		total = total + self:AddWealthList("chars", L["Characters"], self.db.profile.hideplayer)
+	if pref.charlist then
+		total = total + self:AddWealthList(pref, "chars", L["Characters"], pref.hideplayer)
 	end
-	if self.db.profile.guildlist then
-		total = total + self:AddWealthList("guilds", L["Guilds"])
+	if pref.guildlist then
+		total = total + self:AddWealthList(pref, "guilds", L["Guilds"])
 	end
 
-	if self.db.profile.charlist or self.db.profile.guildlist then
+	if pref.charlist or pref.guildlist then
 		tip:AddLine(" ")
 		local line = tip:AddLine(L["Total"])
-		tip:SetCell(line, 2, self:FormatMoneyTip(total), hourly and 2 or 1)
+		tip:SetCell(line, 2, self:FormatMoneyTip(pref, total), hourly and 2 or 1)
 	
 	end
+	tip:Show()
 end
 
-function Scrooge:AddMoneyLines(tbl, when)
-	local hourly = self.db.profile.perhour
+function Scrooge:AddMoneyLines(pref, tbl, when)
+	local hourly = pref.perhour
 	local tip = self.tip
 	local gained, spent, time
 	if when then
@@ -134,21 +150,23 @@ function Scrooge:AddMoneyLines(tbl, when)
 	time = time / 3600
 
 	local line
-	line = tip:AddLine(nil, self:FormatMoneyTip(gained),
-		hourly and self:FormatMoneyTip(gained / time) or nil)
-	tip:SetCell(line, 1, L["Gained"], self.yellowfont)
-	line = tip:AddLine(nil, self:FormatMoneyTip(spent),
-		hourly and self:FormatMoneyTip(spent / time) or nil)
-	tip:SetCell(line, 1, L["Spent"], self.yellowfont)
+	if not pref.simple then
+		line = tip:AddLine(nil, self:FormatMoneyTip(pref, gained),
+			hourly and self:FormatMoneyTip(pref, gained / time) or nil)
+		tip:SetCell(line, 1, L["Gained"], self.yellowfont)
+		line = tip:AddLine(nil, self:FormatMoneyTip(pref, spent),
+			hourly and self:FormatMoneyTip(pref, spent / time) or nil)
+		tip:SetCell(line, 1, L["Spent"], self.yellowfont)
+	end
 	local profit = gained - spent
-	line = tip:AddLine(nil, self:FormatMoneyTip(profit, true),
-		hourly and self:FormatMoneyTip(profit / time, true) or nil)
+	line = tip:AddLine(nil, self:FormatMoneyTip(pref, profit, true),
+		hourly and self:FormatMoneyTip(pref, profit / time, true) or nil)
 	tip:SetCell(line, 1, profit >= 0 and L["Profit"] or L["Loss"], self.yellowfont)
 end
 
-function Scrooge:AddWealthList(tblname, header, ignoreplayer)
+function Scrooge:AddWealthList(pref, tblname, header, ignoreplayer)
 	local tip = self.tip
-	local colspan = self.db.profile.perhour and 2 or 1
+	local colspan = pref.perhour and 2 or 1
 	local total = ignoreplayer and GetMoney() or 0
 	local line
 
@@ -158,7 +176,7 @@ function Scrooge:AddWealthList(tblname, header, ignoreplayer)
 			wealthlist[k] = v
 		end
 	end
-	if self.db.profile.crossfaction and self.data[self.realmkey][self.otherfaction] then
+	if pref.crossfaction and self.data[self.realmkey][self.otherfaction] then
 		for k, v in pairs(self.data[self.realmkey][self.otherfaction][tblname]) do
 			wealthlist[k] = v
 		end
@@ -175,13 +193,13 @@ function Scrooge:AddWealthList(tblname, header, ignoreplayer)
 		for _, name in pairs(t) do
 			local w = wealthlist[name]
 			line = tip:AddLine()
-			if self.db.profile.classcolor and w.class then
+			if pref.classcolor and w.class then
 				local cc = RAID_CLASS_COLORS[w.class]
 				tip:SetCell(line, 1, format("|c%s%s|r", format("ff%.2x%.2x%.2x", cc.r * 255, cc.g * 255, cc.b * 255), name))
 			else
 				tip:SetCell(line, 1, name, self.yellowfont)
 			end
-			tip:SetCell(line, 2, self:FormatMoneyTip(w.money), colspan)
+			tip:SetCell(line, 2, self:FormatMoneyTip(pref, w.money), colspan)
 			total = total + w.money
 		end
 	end
@@ -190,15 +208,12 @@ function Scrooge:AddWealthList(tblname, header, ignoreplayer)
 end
 
 function Scrooge.OnLDBEnter(frame)
-	Scrooge.tip = LibQTip:Acquire("ScroogeTip")
-	Scrooge.tip:SmartAnchorTo(frame)
-	Scrooge.tip:SetHeaderFont(GameTooltipText)
-
+	Scrooge.tipanchor = frame
 	Scrooge:UpdateTooltip()
-	Scrooge.tip:Show()
 end
 
 function Scrooge.OnLDBLeave(frame)
 	LibQTip:Release(Scrooge.tip)
 	Scrooge.tip = nil
+	Scrooge.tipanchor = nil
 end

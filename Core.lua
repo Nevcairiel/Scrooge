@@ -75,6 +75,24 @@ function Scrooge:OnInitialize()
 			guildlist = true,
 			classcolor = true,
 			hideplayer = true,
+			simple = false,
+			alt = {
+				modifier = "none",
+				tipstyle = "full",
+				tipcoins = true,
+				cashflow = "realm",
+				perhour = false,
+				crossfaction = false,
+				today = true,
+				yesterday = true,
+				last7 = false,
+				last30 = false,
+				charlist = true,
+				guildlist = true,
+				classcolor = true,
+				hideplayer = true,
+				simple = false,
+			},
 		},
 	}
 
@@ -161,6 +179,7 @@ function Scrooge:OnEnable()
 	self:RegisterEvent("GUILDBANKFRAME_OPENED", "CheckGuildMoney")
 	self:RegisterEvent("GUILDBANK_UPDATE_MONEY", "CheckGuildMoney")
 	self:RegisterEvent("PLAYER_LEVEL_UP", "UpdateLevel")
+	self:RegisterEvent("MODIFIER_STATE_CHANGED", "UpdateTooltip")
 end
 
 local lastupdate
@@ -315,8 +334,8 @@ function Scrooge:FormatMoneyLDB(amount, colorize)
 	return self:FormatMoney(amount, colorize, self.db.profile.ldbstyle, not self.db.profile.ldbcoins)
 end
 
-function Scrooge:FormatMoneyTip(amount, colorize)
-	return self:FormatMoney(amount, colorize, self.db.profile.tipstyle, not self.db.profile.tipcoins)
+function Scrooge:FormatMoneyTip(pref, amount, colorize)
+	return self:FormatMoney(amount, colorize, pref.tipstyle, not pref.tipcoins)
 end
 
 local offset
@@ -340,8 +359,12 @@ function Scrooge:Today()
 	return floor((time() / 3600 + serveroffset()) / 24)
 end
 
-function Scrooge:SetProfile(key, value)
-	self.db.profile[key] = value
+function Scrooge:SetProfile(key, value, alt)
+	if alt then
+		self.db.profile.alt[key] = value
+	else
+		self.db.profile[key] = value
+	end
 
 	self:UpdateText()
 	self:UpdateTooltip()

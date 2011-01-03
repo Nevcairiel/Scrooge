@@ -22,6 +22,22 @@ local function cashflowset(info, key, value)
 	Scrooge:SetProfile(key, value)
 end
 
+local function altprofileget(info)
+	return Scrooge.db.profile.alt[info.arg]
+end
+
+local function altprofileset(info, value)
+	Scrooge:SetProfile(info.arg, value, true)
+end
+
+local function altcashflowget(info, key)
+	return Scrooge.db.profile.alt[key]
+end
+
+local function altcashflowset(info, key, value)
+	Scrooge:SetProfile(key, value, true)
+end
+
 local function deletechar(info)
 	Scrooge:DeleteCharacter(info.arg.realm, info.arg.faction, info.arg.char)
 end
@@ -61,7 +77,7 @@ local options = {
 	    },
 	    ldbcoins = {
 		type = "toggle",
-		name = L["Show Coins"],
+		name = L["Show coins"],
 		desc = L["Show graphical coins instead of text."],
 		arg = "ldbcoins",
 		order = 15,
@@ -82,7 +98,7 @@ local options = {
 	    },
 	    tipcoins = {
 		type = "toggle",
-		name = L["Show Coins"],
+		name = L["Show coins"],
 		desc = L["Show graphical coins instead of text."],
 		arg = "tipcoins",
 		order = 25,
@@ -92,21 +108,55 @@ local options = {
 		order = 30,
 		name = "",
 	    },
+	    charlist = {
+		type = "toggle",
+		name = L["Show characters"],
+		desc = L["Show a list of all your characters on the current realm and how much money they have on the tooltip."],
+		arg = "charlist",
+		order = 40,
+	    },
+	    guildlist = {
+		type = "toggle",
+		name = L["Show guilds"],
+		desc = L["Show a list of all your defined personal guilds on the current realm and how much money is in the guild bank on the tooltip."],
+		arg = "guildlist",
+		order = 50,
+	    },
+	    hideplayer = {
+		type = "toggle",
+		name = L["Hide player"],
+		desc = L["Don't display the current player in the character list, show only alts. The current player is included in the total regardless."],
+		arg = "hideplayer",
+		order = 60,
+	    },
+	    classcolor = {
+		type = "toggle",
+		name = L["Class colors"],
+		desc = L["Colorize character names on the tooltip with the standard class colors."],
+		arg = "classcolor",
+		order = 70,
+	    },
 	    crossfaction = {
 		type = "toggle",
-		name = L["Show cross-faction data"],
+		name = L["Cross-faction data"],
 		desc = L["Include characters from the opposing faction in both the character list and the statistics totals."],
 		arg = "crossfaction",
-		width = "full",
-		order = 40,
+		order = 80,
 	    },
 	    perhour = {
 		type = "toggle",
-		name = L["Show per-hour cashflow"],
+		name = L["Per-hour cashflow"],
 		desc = L["Show an extra column in the tooltip with the hourly cashflow based on time played."],
 		arg = "perhour",
+		order = 90,
+	    },
+	    simple = {
+		type = "toggle",
+		name = L["Simple totals"],
+		desc = L["Show only net profit/loss on the tooltip, don't show separate lines for amount gained and spent."],
+		arg = "simple",
 		width = "full",
-		order = 50,
+		order = 95,
 	    },
 	    cashflow = {
 		type = "select",
@@ -118,7 +168,7 @@ local options = {
 		    realm = L["Per-realm"],
 		    all = L["Across all realms"],
 		},
-		order = 60,
+		order = 100,
 	    },
 	    cashflowhist = {
 		type = "multiselect",
@@ -132,25 +182,67 @@ local options = {
 		},
 		get = cashflowget,
 		set = cashflowset,
-		order = 70,
+		order = 110,
 	    },
 	},
+    },
+    alt = {
+	type = "group",
+	name = L["Alternate Tooltip"],
+	desc = L["Set options for an alternate tooltip display to show when holding a modifier key."],
+	order = 20,
+	get = altprofileget,
+	set = altprofileset,
+	args = {},
     },
     chars = {
 	type = "group",
 	name = L["Characters"],
 	desc = L["View or remove characters from the database."],
-	order = 20,
+	order = 30,
 	args = {},
     },
     guilds = {
 	type = "group",
 	name = L["Guilds"],
 	desc = L["Add or remove guilds from the database."],
-	order = 30,
+	order = 40,
 	args = {},
     },
 }
+
+local function altdisabled()
+	return Scrooge.db.profile.alt.modifier == "none"
+end
+
+local function mkaltoptions()
+	wipe(options.alt.args)
+	for k, v in pairs(options.global.args) do
+		options.alt.args[k] = {}
+		for k2, v2 in pairs(v) do
+			options.alt.args[k][k2] = v2
+		end
+		options.alt.args[k].disabled = altdisabled
+	end
+	options.alt.args.ldbstyle = nil
+	options.alt.args.ldbcoins = nil
+	options.alt.args.cashflowhist.get = altcashflowget
+	options.alt.args.cashflowhist.set = altcashflowset
+
+	options.alt.args.modifier = {
+	    type = "select",
+	    name = L["Modifier key:"],
+	    desc = L["Select a modifier key that, when held down, will show the alternate tooltip view."],
+	    arg = "modifier",
+	    values = {
+		none = L["None"],
+		alt = L["Alt"],
+		ctrl = L["Ctrl"],
+		shift = L["Shift"],
+	    },
+	    order = 10,
+	}
+end
 
 local lastorder = 0
 local function poprealm(realm, faction, data, callback)
@@ -263,38 +355,7 @@ local function mkcharoptions()
 	wipe(options.chars.args)
 	local c = options.chars.args
 
-	c.charlist = {
-		type = "toggle",
-		name = L["Show character list on tooltip"],
-		desc = L["Show a list of all your characters on the current realm and how much money they have on the tooltip."],
-		get = profileget,
-		set = profileset,
-		arg = "charlist",
-		width = "full",
-		order = 10,
-	}
-	c.hideplayer = {
-		type = "toggle",
-		name = L["Hide player from character list"],
-		desc = L["Don't display the current player in the character list, show only alts. The current player is included in the total regardless."],
-		get = profileget,
-		set = profileset,
-		arg = "hideplayer",
-		width = "full",
-		order = 20,
-	}
-	c.classcolor = {
-		type = "toggle",
-		name = L["Use class colors on tooltip"],
-		desc = L["Colorize character names on the tooltip with the standard class colors."],
-		get = profileget,
-		set = profileset,
-		arg = "classcolor",
-		width = "full",
-		order = 30,
-	}
-
-	lastorder = 40
+	lastorder = 10
 
 	c.current = poprealm(Scrooge.realmkey, Scrooge.factionkey, Scrooge.realmdb.chars, charcb)
 	for rname, rdata in pairs(Scrooge.data) do
@@ -312,36 +373,21 @@ local function mkguildoptions()
 	wipe(options.guilds.args)
 	local c = options.guilds.args
 
-	c.guildlist = {
-		type = "toggle",
-		name = L["Show guild list on tooltip"],
-		desc = L["Show a list of all your defined personal guilds on the current realm and how much money is in the guild bank on the tooltip."],
-		get = profileget,
-		set = profileset,
-		arg = "guildlist",
-		width = "full",
-		order = 10,
-	}
-	c.spacer = {
-		type = "description",
-		name = " ",
-		order = 20,
-	}
 	c.helptext = {
 		type = "description",
 		name = L["GUILD_HELP_TEXT"],
-		order = 30,
+		order = 10,
 	}
 	c.addguild = {
 		type = "input",
 		name = L["Add Personal Guild"],
-		width = "double",
+		width = "full",
 		get = false,
 		set = addguild,
-		order = 40,
+		order = 20,
 	}
 
-	lastorder = 50
+	lastorder = 30
 
 	if next(Scrooge.realmdb.guilds) then
 		c.current = poprealm(Scrooge.realmkey, Scrooge.factionkey, Scrooge.realmdb.guilds, guildcb)
@@ -360,6 +406,9 @@ end
 function Scrooge:SetupConfig()
 	ACR:RegisterOptionsTable("Scrooge", options.global)
 	self.optref = ACD:AddToBlizOptions("Scrooge", L["Scrooge"])
+	mkaltoptions()
+	ACR:RegisterOptionsTable("Scrooge - Alternate Tooltip", options.alt)
+	ACD:AddToBlizOptions("Scrooge - Alternate Tooltip", L["Alternate Tooltip"], L["Scrooge"])
 	ACR:RegisterOptionsTable("Scrooge - Characters", mkcharoptions)
 	ACD:AddToBlizOptions("Scrooge - Characters", L["Characters"], L["Scrooge"])
 	ACR:RegisterOptionsTable("Scrooge - Guilds", mkguildoptions)
