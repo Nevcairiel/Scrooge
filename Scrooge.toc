@@ -1,4 +1,4 @@
-## Interface: 50400
+## Interface: 60000
 ## Title: Scrooge
 ## Notes: Keeps track of gold and cash flow across multiple characters
 ## Version: @project-version@
